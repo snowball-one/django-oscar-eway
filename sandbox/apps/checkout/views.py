@@ -100,9 +100,10 @@ class PaymentDetailsView(OscarPaymentDetailsView):
 
         if not response.transaction_status:
             raise PaymentError(
-                "received error '%s' from eway for transaction #%s",
-                response.response_message,
-                response.transaction_id
+                "received error(s) '%s' from eway for transaction #%s" % (
+                    [(c.code, c.message) for c in response.response_message],
+                    response.transaction_id,
+                )
             )
 
         #TODO store token_customer_id with user

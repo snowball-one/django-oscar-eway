@@ -79,7 +79,7 @@ class RapidResponseCode(object):
 
     def __init__(self, code):
         self.code = code
-        self.message = RESPONSE_CODES.get('code', '')
+        self.message = RESPONSE_CODES.get(code, '')
 
 
 class TotalAmountMixin(object):
