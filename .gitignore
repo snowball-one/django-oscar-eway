@@ -1,0 +1,17 @@
+*.sw[op]
+*.py[co]
+*.egg-info
+*.sqlite
+*.sqlite3
+*.db
+
+.coverage
+.vagrant
+.ropeproject
+
+.tox/
+
+dist/
+cover/
+public/
+docs/build/

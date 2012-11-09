@@ -1,0 +1,48 @@
+{% extends 'oscar/checkout/preview.html' %}
+{% load i18n %}
+{% load staticfiles %}
+{% load currency_filters %}
+
+{% block payment_method %}
+<div class="span6">
+	<div class="sub-header">
+		<h2>Payment</h2>
+	</div>
+	<div class="well well-success">
+		<p>{{ order_total_incl_tax|currency }} will be debited from your bankcard.</p>
+		<div class="alert-actions">
+			<a href="{% url checkout:payment-details %}" class="btn">Change payment details</a>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block place_order %}
+<h3>Please review the information below, then click "Place Order"</h3>
+
+<form id="eway-form" method="post" action="{{ form_action_url }}">
+    {{ bankcard_form }}
+</form>
+
+<form id="place-order-form" method="post" action="{% url checkout:preview %}">
+    {% csrf_token %}
+    <div style="display:none">
+        <input type="hidden" name="action" value="place_order" />
+        <input type="hidden" name="access_code" />
+    </div>
+
+    <div class="form-actions">
+        <button id='place-order' type="submit" value="Place order"
+                class="pull-right btn btn-primary btn-large js-disable-on-click">
+            {% trans "Place order" %}
+        </button>
+    </div>
+</form>
+{% endblock place_order %}
+
+{% block extrascripts %}
+    {{ block.super }}
+    {#<script type="text/javascript" src="https://api.ewaypayments.com/JSONP/v3/js"></script>#}
+    <script type="text/javascript" src="{% static "eway/js/eway.js" %}"></script>
+    <script type="text/javascript" src="{% static "eway/js/processing.js" %}"></script>
+{% endblock %}
