@@ -3,8 +3,12 @@ import requests
 from decimal import Decimal as D
 
 from django.conf import settings
+from django.db.models import get_model
 from django.utils import simplejson as json
 from django.utils.translation import ugettext_lazy as _
+
+EwayTransaction = get_model('eway', 'EwayTransaction')
+EwayResponseCode = get_model('eway', 'EwayResponseCode')
 
 
 EWAY_PROCESS_PAYMENT = 'ProcessPayment'
@@ -45,22 +49,26 @@ class RapidError(BaseException):
 
 class RapidResponse(object):
 
-    def __init__(self, access_code, form_action_url, payment, customer, errors):
+    def __init__(self, access_code, form_action_url, payment, customer, errors,
+                 json_raw=None):
         self.access_code = access_code
         self.form_action_url = form_action_url
         self.payment = payment
+        self.customer = customer
 
         self.errors = errors
 
+        self.json_raw = json_raw
+
     @classmethod
     def from_json(cls, response):
-        print 'RAPID RESPONSE', response
         return cls(
             access_code=response['AccessCode'],
             form_action_url=response['FormActionURL'],
             payment=Payment.from_json(response['Payment']),
             customer=Customer.from_json(response['Customer']),
-            errors=cls.extract_errors(response['Errors'])
+            errors=cls.extract_errors(response['Errors']),
+            json_raw=response,
         )
 
     @classmethod
@@ -96,6 +104,7 @@ class TotalAmountMixin(object):
     def total_amount(self, value):
         if value is None:
             self.total_amount_raw = None
+            return None
         self.total_amount_raw = int(value * 100)
         return value
 
@@ -370,13 +379,13 @@ class Customer(RapidBaseObject):
         self.postal_code = kwargs.get('postal_code', None)
         self.country = kwargs.get('country', None)
 
-        self.card_name = None
-        self.card_number = None
-        self.card_start_month = None
-        self.card_start_year = None
-        self.card_issue_number = None
-        self.card_expiry_month = None
-        self.card_expiry_year = None
+        self.card_name = kwargs.get('card_name', None)
+        self.card_number = kwargs.get('card_number', None)
+        self.card_start_month = kwargs.get('card_start_month', None)
+        self.card_start_year = kwargs.get('card_start_year', None)
+        self.card_issue_number = kwargs.get('card_issue_number', None)
+        self.card_expiry_month = kwargs.get('card_expiry_month', None)
+        self.card_expiry_year = kwargs.get('card_expiry_year', None)
 
         if billing_address:
             self.set_address(billing_address)
@@ -403,6 +412,7 @@ class Customer(RapidBaseObject):
 
     @classmethod
     def from_json(cls, response):
+        print 'from_json', response
         return cls(
             token_customer_id=response.get("TokenCustomerID", None),
             reference=response.get("Reference", None),
@@ -540,7 +550,6 @@ class Gateway(object):
                 **kwargs
             ),
         )
-        print eway_request.serialise()
         response = self.access_codes(eway_request)
         return response
 
@@ -552,23 +561,56 @@ class Gateway(object):
         raise NotImplementedError()
 
     def access_codes(self, request):
-        response = self._post(
-            "%s/AccessCodes" % self.base_url,
-            data=request.serialise(),
+        url = "%s/AccessCodes" % self.base_url
+        response = self._post(url, data=request.serialise())
+
+        response = RapidResponse.from_json(response.json)
+        txn = EwayTransaction.objects.create(
+            txn_url=url,
+            txn_method=unicode(request.method),
+            amount=request.payment.total_amount,
+            order_number=request.payment.invoice_reference,
+            request_json=json.dumps(request.json(), indent=4),
+            response_json=response.json_raw,
         )
-        return RapidResponse.from_json(response.json)
+        for error in response.errors or []:
+            EwayResponseCode.objects.get_or_create(
+                code=error.code,
+                message=error.message,
+                transactions=txn,
+            )
+        return response
 
     def get_access_code_result(self, access_code):
-        response = self._get(
-            "%s/AccessCode/%s" % (self.base_url, access_code),
+        request_url = "%s/AccessCode/%s" % (self.base_url, access_code)
+        response = self._get(request_url)
+        response = RapidAccessCodeResult.from_json(response.json)
+
+        txn = EwayTransaction.objects.create(
+            txn_url=request_url,
+            txn_method="GetAccessCodeResult",
+            txn_ref=response.transaction_id,
+            amount=response.total_amount,
+            token_customer_id=response.token_customer_id,
+            order_number=response.invoice_reference,
+            response_code=response.response_code.code,
+            response_message=response.response_code.message,
+            response_json=response.json_raw,
         )
-        return RapidAccessCodeResult.from_json(response.json)
+        for error in response.errors or []:
+            EwayResponseCode.objects.get_or_create(
+                code=error.code,
+                message=error.message,
+                transactions=txn,
+            )
+        return response
 
     def _get(self, url):
         response = requests.get(
             url,
             auth=(self.api_key, self.password),
         )
+
         if response.status_code != 200:
             raise RapidError(
                 'received error response: [%s] %s' % (
@@ -586,6 +628,7 @@ class Gateway(object):
             data=data,
             headers=headers,
         )
+
         if response.status_code != 200:
             raise RapidError(
                 'received error response: [%s] %s' % (
@@ -651,6 +694,7 @@ RESPONSE_CODES = {
     '67': 'Capture Card',
     '75': 'PIN Tries Exceeded',
     '82': 'CVV Validation Error',
+    '84': 'Do Not Honour (Sandbox)',
     '90': 'Cutoff In Progress',
     '91': 'Card Issuer Unavailable',
     '92': 'Unable To Route Transaction',

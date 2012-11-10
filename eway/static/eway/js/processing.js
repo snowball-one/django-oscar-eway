@@ -9,6 +9,7 @@
             form.submit(function (ev) {
                 ev.preventDefault();
                 $(this).unbind('submit');
+                console.log("submitting form to eWay");
                 eway.processing.processTransaction($("#eway-form")[0]);
             });
         },
@@ -24,6 +25,8 @@
                     var orderForm = $('#place-order-form');
                     $('input[name=access_code]', orderForm).val(data.AccessCode);
                     orderForm.submit();
+
+                    console.log("received response", data);
 
                     //if (data.Is3DSecure) {
                     //    window.location.replace(data.RedirectUrl);

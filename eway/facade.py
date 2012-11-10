@@ -6,6 +6,8 @@ from oscar.core.loading import get_classes
 from eway import gateway
 from eway import forms
 
+PURCHASE = 'Purchase'
+
 
 (RedirectRequired,
  UnableToTakePayment,
