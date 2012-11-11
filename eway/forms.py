@@ -65,12 +65,12 @@ class EwayBankcardForm(forms.Form):
 
     EWAY_CARDEXPIRYMONTH = forms.ChoiceField(
         choices=expiry_month_choices(),
-        label=_("Expiry month"),
+        label=_("Valid to"),
         required=False
     )
     EWAY_CARDEXPIRYYEAR = forms.ChoiceField(
         choices=expiry_year_choices(5),
-        label=_("Expiry year"),
+        label="",
         required=False
     )
 

@@ -412,7 +412,6 @@ class Customer(RapidBaseObject):
 
     @classmethod
     def from_json(cls, response):
-        print 'from_json', response
         return cls(
             token_customer_id=response.get("TokenCustomerID", None),
             reference=response.get("Reference", None),

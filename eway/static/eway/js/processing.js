@@ -12,13 +12,10 @@
             ep.orderFormId = options.orderFormId || "#place-order-form";
             ep.ewayFormId = options.ewayFormId || "#eway-form";
 
-            console.log('initialising');
             var form = $(ep.orderFormId);
-
             form.submit(function (ev) {
                 ev.preventDefault();
                 $(this).unbind('submit');
-                console.log("submitting form to eWay");
                 eway.processing.processTransaction($(ep.ewayFormId)[0]);
             });
         },
