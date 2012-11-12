@@ -49,11 +49,3 @@ class Facade(object):
 
     def get_access_code_result(self, access_code):
         return self.gateway.get_access_code_result(access_code)
-
-    #def create_token_customer(self, title, first_name, last_name, country):
-    #    self.gateway.create_token_customer(
-    #        title=title,
-    #        first_name=first_name,
-    #        last_name=last_name,
-    #        country_code=country.iso_3166_1_a2.lower(),
-    #    )

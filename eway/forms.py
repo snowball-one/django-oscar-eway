@@ -133,7 +133,9 @@ class EwayBankcardForm(forms.Form):
 
     def get_obfuscated_kwargs(self):
         card_number = self.data['EWAY_CARDNUMBER']
-        mask_length = len(card_number)
+        # eway uses 10 visible digits in their obfuscation, we replicate
+        # this here to stay compliant
+        mask_length = abs(len(card_number)-10)
         return {
             'card_type': bankcard_type(card_number),
             'name': self.data['EWAY_CARDNAME'],

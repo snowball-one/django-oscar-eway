@@ -39,7 +39,6 @@
                 orderForm = $(ep.orderFormId);
 
             $(ep.ewayFormId).remove();
-            $('input[name=access_code]', orderForm).val(data.AccessCode);
             orderForm.submit();
         }
     };
