@@ -78,7 +78,7 @@ class RapidResponse(object):
 
         errors = []
         for error_code in error_codes.split(','):
-            errors.append((error_code, RESPONSE_CODES[error_code]))
+            errors.append(RapidResponseCode(error_code))
 
         return errors
 
