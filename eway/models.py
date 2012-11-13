@@ -1,5 +1,3 @@
-import re
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -44,21 +42,6 @@ class EwayTransaction(models.Model):
 
     class Meta:
         ordering = ('-date_created',)
-
-    #def save(self, *args, **kwargs):
-    #    if not self.pk:
-    #        cc_regex = re.compile(r'\d{12}')
-    #        self.request_xml = cc_regex.sub('XXXXXXXXXXXX', self.request_xml)
-    #        ccv_regex = re.compile(r'<Cvc2>\d+</Cvc2>')
-
-    #        self.request_xml = ccv_regex.sub('<Cvc2>XXX</Cvc2>',
-    #                                         self.request_xml)
-
-    #        pw_regex = re.compile(r'<PostPassword>.*</PostPassword>')
-    #        self.request_xml = pw_regex.sub('<PostPassword>XXX</PostPassword>',
-    #                                        self.request_xml)
-
-    #    super(EwayTransaction, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return u'%s txn for order %s - ref: %s, message: %s' % (
