@@ -16,6 +16,7 @@ setup(
         'versiontools>=1.9.1',
         'django-oscar>=0.4',
         'requests>=0.13.5',
+        'South>=0.7.6',
     ],
     include_package_data=True,
     # See http://pypi.python.org/pypi?%3Aaction=list_classifiers

@@ -21,8 +21,8 @@ class EwayTransaction(models.Model):
 
     # Transaction type
     txn_url = models.CharField(max_length=800, null=True)
-    txn_method = models.CharField(max_length=12, null=True)
-    txn_ref = models.CharField(max_length=16, null=True)
+    txn_method = models.CharField(max_length=100, null=True)
+    txn_ref = models.CharField(max_length=100, null=True)
 
     amount = models.DecimalField(
         decimal_places=2,
