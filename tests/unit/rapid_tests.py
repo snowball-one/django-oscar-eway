@@ -242,6 +242,6 @@ class TestAccessCodeResponse(TestCase):
         )
         self.assertEquals(
             txn.response_json,
-            json.dumps(RequestsResponse.json)
+            json.dumps(RequestsResponse.json, indent=4)
         )
         self.assertEquals(gateway.EwayResponseCode.objects.count(), 2)

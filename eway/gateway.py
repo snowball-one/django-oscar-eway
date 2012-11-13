@@ -59,9 +59,9 @@ class RapidResponse(object):
         self.errors = errors
 
         try:
-            self.json_raw = json.dumps(json_raw)
+            self.json_raw = json.dumps(json_raw, indent=4)
         except ValueError:
-            self.json_raw = json.dumps(json_raw)
+            self.json_raw = json_raw
 
     @classmethod
     def from_json(cls, response):
@@ -138,7 +138,7 @@ class RapidAccessCodeResult(TotalAmountMixin):
         self.invoice_number = kwargs.get('invoice_number', None)
 
         try:
-            self.json_raw = json.dumps(kwargs.get('json_raw'))
+            self.json_raw = json.dumps(kwargs.get('json_raw'), indent=4)
         except ValueError:
             self.json_raw = kwargs.get('json_raw')
 
