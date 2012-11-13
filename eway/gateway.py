@@ -58,7 +58,10 @@ class RapidResponse(object):
 
         self.errors = errors
 
-        self.json_raw = json_raw
+        try:
+            self.json_raw = json.dumps(json_raw)
+        except ValueError:
+            self.json_raw = json.dumps(json_raw)
 
     @classmethod
     def from_json(cls, response):
@@ -134,7 +137,10 @@ class RapidAccessCodeResult(TotalAmountMixin):
         self.invoice_reference = kwargs.get('invoice_reference', None)
         self.invoice_number = kwargs.get('invoice_number', None)
 
-        self.json_raw = kwargs.get('json_raw')
+        try:
+            self.json_raw = json.dumps(kwargs.get('json_raw'))
+        except ValueError:
+            self.json_raw = kwargs.get('json_raw')
 
     @classmethod
     def from_json(cls, response):
@@ -573,11 +579,12 @@ class Gateway(object):
             response_json=response.json_raw,
         )
         for error in response.errors or []:
-            EwayResponseCode.objects.get_or_create(
+            erc, __ = EwayResponseCode.objects.get_or_create(
                 code=error.code,
                 message=error.message,
-                transactions=txn,
             )
+            erc.transactions.add(txn)
+            erc.transactions.add(txn)
         return response
 
     def get_access_code_result(self, access_code):
@@ -597,11 +604,11 @@ class Gateway(object):
             response_json=response.json_raw,
         )
         for error in response.errors or []:
-            EwayResponseCode.objects.get_or_create(
+            erc, __ = EwayResponseCode.objects.get_or_create(
                 code=error.code,
                 message=error.message,
-                transactions=txn,
             )
+            erc.transactions.add(txn)
         return response
 
     def _get(self, url):
