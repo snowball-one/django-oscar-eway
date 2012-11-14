@@ -7,8 +7,8 @@ from django.db.models import get_model
 from django.utils import simplejson as json
 from django.utils.translation import ugettext_lazy as _
 
-EwayTransaction = get_model('eway', 'EwayTransaction')
-EwayResponseCode = get_model('eway', 'EwayResponseCode')
+Transaction = get_model('eway', 'Transaction')
+ResponseCode = get_model('eway', 'ResponseCode')
 
 
 EWAY_PROCESS_PAYMENT = 'ProcessPayment'
@@ -24,7 +24,13 @@ EWAY_PAYMENT_METHODS = (
 )
 
 EWAY_TITLE_VALUES = (
-    u'', 'Mr.', 'Ms.', 'Mrs.', 'Miss', 'Dr.', 'Sir.', 'Prof.',
+    'Mr.',
+    'Ms.',
+    'Mrs.',
+    'Miss',
+    'Dr.',
+    'Sir.',
+    'Prof.',
 )
 
 EWAY_SHIPPING_UNKNOWN = 'Unknown'
@@ -570,45 +576,37 @@ class Gateway(object):
         response = self._post(url, data=request.serialise())
 
         response = RapidResponse.from_json(response.json)
-        txn = EwayTransaction.objects.create(
-            txn_url=url,
-            txn_method=unicode(request.method),
+        error_codes = ','.join([e.code for e in response.errors])
+        txn = Transaction.objects.create(
+            method=unicode(request.method),
+            request_url=url,
             amount=request.payment.total_amount,
             order_number=request.payment.invoice_reference,
             request_json=json.dumps(request.json(), indent=4),
             response_json=response.json_raw,
+            response_message=error_codes,
         )
-        for error in response.errors or []:
-            erc, __ = EwayResponseCode.objects.get_or_create(
-                code=error.code,
-                message=error.message,
-            )
-            erc.transactions.add(txn)
-            erc.transactions.add(txn)
+        txn.add_response_codes(response.errors or [])
         return response
 
     def get_access_code_result(self, access_code):
         request_url = "%s/AccessCode/%s" % (self.base_url, access_code)
         response = self._get(request_url)
-        response = RapidAccessCodeResult.from_json(response.json)
 
-        txn = EwayTransaction.objects.create(
-            txn_url=request_url,
-            txn_method="GetAccessCodeResult",
-            txn_ref=response.transaction_id,
+        response = RapidAccessCodeResult.from_json(response.json)
+        error_codes = ','.join([e.code for e in response.errors])
+        txn = Transaction.objects.create(
+            request_url=request_url,
+            method="GetAccessCodeResult",
+            transaction_id=response.transaction_id,
             amount=response.total_amount,
             token_customer_id=response.token_customer_id,
             order_number=response.invoice_reference,
             response_code=response.response_code.code,
-            response_message=response.response_code.message,
+            response_message=response.response_code.message or error_codes,
             response_json=response.json_raw,
         )
-        for error in response.errors or []:
-            erc, __ = EwayResponseCode.objects.get_or_create(
-                code=error.code,
-                message=error.message,
-            )
-            erc.transactions.add(txn)
+        txn.add_response_codes(response.errors or [])
         return response
 
     def _get(self, url):

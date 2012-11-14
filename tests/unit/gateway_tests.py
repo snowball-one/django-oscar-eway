@@ -237,11 +237,11 @@ class TestAccessCodeResponse(TestCase):
                 currency_code="AUD",
             )
         ))
-        txn = gateway.EwayTransaction.objects.get(
+        txn = gateway.Transaction.objects.get(
             order_number=response.payment.invoice_reference
         )
         self.assertEquals(
             txn.response_json,
             json.dumps(RequestsResponse.json, indent=4)
         )
-        self.assertEquals(gateway.EwayResponseCode.objects.count(), 2)
+        self.assertEquals(gateway.ResponseCode.objects.count(), 2)
