@@ -37,9 +37,7 @@ def start_month_choices():
     The months are numbered one through 12 according to ISO standard. The first
     item in the list is '--' to allow for not selecting a month.
     """
-    months = expiry_month_choices()
-    months.insert(0, ("", _("--")))
-    return months
+    return [("", _("--"))] + expiry_month_choices()
 
 
 def start_year_choices(num_years=5):
@@ -50,9 +48,9 @@ def start_year_choices(num_years=5):
     *numeric year*) in 4-digit notation, e.g. 2016. The first item in the
     list is '--' to allow for not selecting a year.
     """
-    years = [(x, x) for x in xrange(date.today().year - num_years,
-                                    date.today().year + 1)]
-    years.insert(0, ("", _("--")))
+    years = [("", _("--"))]
+    for year in xrange(date.today().year-num_years, date.today().year+1):
+        years.append((year, year))
     return years
 
 
