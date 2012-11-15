@@ -20,17 +20,17 @@ class TransactionAdmin(admin.ModelAdmin):
         ErrorInline,
     ]
     list_display = [
-        'txn_method',
-        'txn_ref',
+        'method',
+        'transaction_id',
         'amount',
         'response_message',
         'token_customer_id',
         'date_created',
     ]
     readonly_fields = [
-        'txn_method',
-        'txn_url',
-        'txn_ref',
+        'method',
+        'request_url',
+        'transaction_id',
         'amount',
         'response_code',
         'response_message',
