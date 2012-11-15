@@ -7,8 +7,7 @@ from oscar.core.loading import get_class
 from oscar.apps.checkout.views import PaymentDetailsView as OscarPaymentDetailsView
 from oscar.apps.payment.models import SourceType, Source
 
-from eway.facade import Facade
-from eway import forms, gateway
+from eway.rapid import forms, gateway, facade
 
 OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
 PaymentError = get_class('payment.exceptions', 'PaymentError')
@@ -16,14 +15,14 @@ PaymentError = get_class('payment.exceptions', 'PaymentError')
 
 class PaymentDetailsView(OscarPaymentDetailsView):
     template_name = 'checkout/payment_details.html'
-    facade = Facade()
+    facade = facade.Facade()
 
     def get_context_data(self, **kwargs):
         ctx = super(PaymentDetailsView, self).get_context_data(**kwargs)
         if self.preview:
-            bankcard_form = forms.EwayBankcardForm(self.request.POST)
+            bankcard_form = forms.BankcardForm(self.request.POST)
         else:
-            bankcard_form = forms.EwayBankcardForm()
+            bankcard_form = forms.BankcardForm()
         ctx['bankcard_form'] = kwargs.get('bankcard_form', bankcard_form)
         return ctx
 
@@ -58,7 +57,7 @@ class PaymentDetailsView(OscarPaymentDetailsView):
             return self.render_preview(
                 request,
                 form_action_url=response.form_action_url,
-                bankcard_form=forms.EwayHiddenBankcardForm(data),
+                bankcard_form=forms.BankcardForm(data),
             )
 
         # Posting to payment-details isn't the right thing to do
@@ -133,29 +132,3 @@ class PaymentDetailsView(OscarPaymentDetailsView):
         order_number = generator.order_number(basket)
         self.checkout_session.set_order_number(order_number)
         return order_number
-
-#    def do_place_order(self, request):
-#        bankcard_form = BankcardForm(request.POST)
-#        if not bankcard_form.is_valid():
-#            messages.error(request, "Invalid submission")
-#            return HttpResponseRedirect(reverse('checkout:payment-details'))
-#        bankcard = bankcard_form.get_bankcard_obj()
-#
-#        # Call oscar's submit method, passing through the bankcard object so it gets
-#        # passed to the 'handle_payment' method
-#        return self.submit(request.basket, payment_kwargs={'bankcard': bankcard})
-#
-#    def post(self, request, *args, **kwargs):
-#        if request.POST.get('action', '') == 'place_order':
-#            return self.do_place_order(request)
-#
-#        # Check bankcard form is valid
-#        bankcard_form = BankcardForm(request.POST)
-#        if not bankcard_form.is_valid():
-#            ctx = self.get_context_data(**kwargs)
-#            ctx['bankcard_form'] = bankcard_form
-#            return self.render_to_response(ctx)
-#
-#        # Render preview page (with bankcard details hidden)
-#        return self.render_preview(request, bankcard_form=bankcard_form)
-

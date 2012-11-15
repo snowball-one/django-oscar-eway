@@ -5,7 +5,7 @@ from django.utils import simplejson as json
 from django.test import TestCase
 from django.db.models import get_model
 
-from eway import gateway
+from eway.rapid import gateway
 
 
 Country = get_model('address', 'Country')

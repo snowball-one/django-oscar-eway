@@ -42,7 +42,6 @@
 
 {% block extrascripts %}
     {{ block.super }}
-    {#<script type="text/javascript" src="https://api.ewaypayments.com/JSONP/v3/js"></script>#}
-    <script type="text/javascript" src="{% static "eway/js/eway.js" %}"></script>
-    <script type="text/javascript" src="{% static "eway/js/processing.js" %}"></script>
+    <script type="text/javascript" src="https://api.ewaypayments.com/JSONP/v3/js"></script>
+    <script type="text/javascript" src="{% static "eway/js/rapid.js" %}"></script>
 {% endblock %}

@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from eway.forms import BankcardForm
+from eway.rapid.forms import BankcardForm
 
 
 class TestBankcardForm(TestCase):
