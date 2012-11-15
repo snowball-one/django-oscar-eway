@@ -55,8 +55,9 @@ class Transaction(models.Model):
             erc.transactions.add(self)
 
     def save(self, *args, **kwargs):
-        if not self.response_message and not self.transactions.count():
-            self.response_message = u'Successful'
+        if self.id and not self.response_message:
+            if  not self.response_messages.count():
+                self.response_message = u'Successful'
         super(Transaction, self).save(*args, **kwargs)
 
     class Meta:
