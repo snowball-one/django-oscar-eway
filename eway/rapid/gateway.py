@@ -155,6 +155,8 @@ class RapidAccessCodeResult(TotalAmountMixin):
         errors = response.get('Errors', [])
         if errors:
             errors = [RapidResponseCode(c) for c in errors.split(',')]
+        else:
+            errors = []
 
         response_message = response.get('ResponseMessage', None)
         if response_message:
@@ -612,10 +614,15 @@ class Gateway(object):
         return response
 
     def _get(self, url):
-        response = requests.get(
-            url,
-            auth=(self.api_key, self.password),
-        )
+        try:
+            response = requests.get(
+                url,
+                auth=(self.api_key, self.password),
+            )
+        except Exception as exc:
+            raise RapidError(
+                'problem connecting to eWay server: %s' % (exc.message)
+            )
 
         if response.status_code != 200:
             raise RapidError(
@@ -628,12 +635,17 @@ class Gateway(object):
 
     def _post(self, url, data):
         headers = {'content-type': 'application/json'}
-        response = requests.post(
-            "%s/AccessCodes" % self.base_url,
-            auth=(self.api_key, self.password),
-            data=data,
-            headers=headers,
-        )
+        try:
+            response = requests.post(
+                "%s/AccessCodes" % self.base_url,
+                auth=(self.api_key, self.password),
+                data=data,
+                headers=headers,
+            )
+        except Exception as exc:
+            raise RapidError(
+                'problem connecting to eWay server: %s' % (exc.message)
+            )
 
         if response.status_code != 200:
             raise RapidError(

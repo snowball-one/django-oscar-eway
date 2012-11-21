@@ -9,3 +9,4 @@ South==0.7.3
 django-nose==1.0
 nose==1.1.2
 pinocchio==0.3.1
+django-oscar-testsupport==0.1.1

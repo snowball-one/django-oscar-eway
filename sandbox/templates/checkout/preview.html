@@ -20,17 +20,10 @@
 {% block place_order %}
 <h3>Please review the information below, then click "Place Order"</h3>
 
-<form id="eway-form" method="post" action="{{ form_action_url }}">
-    {{ bankcard_form }}
-</form>
-
-<form id="place-order-form" method="post" action="{% url checkout:preview %}">
-    {% csrf_token %}
-    <div style="display:none">
-        <input type="hidden" name="action" value="place_order" />
-        <input type="hidden" name="access_code" />
+<form id="place-order-form" method="post" action="{{ form_action_url }}">
+    <div id="eway-form" style="display: none;">
+        {{ bankcard_form }}
     </div>
-
     <div class="form-actions">
         <button id='place-order' type="submit" value="Place order"
                 class="pull-right btn btn-primary btn-large js-disable-on-click">
@@ -39,9 +32,3 @@
     </div>
 </form>
 {% endblock place_order %}
-
-{% block extrascripts %}
-    {{ block.super }}
-    <script type="text/javascript" src="https://api.ewaypayments.com/JSONP/v3/js"></script>
-    <script type="text/javascript" src="{% static "eway/js/rapid.js" %}"></script>
-{% endblock %}
