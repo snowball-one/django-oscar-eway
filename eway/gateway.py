@@ -268,7 +268,7 @@ class Request(RapidBaseObject):
     }
 
     def __init__(self, redirect_url, method, customer_ip=None, device_id=None,
-                 customer=None, payment=None, shipping_address=None, basket=None,
+                 customer=None, payment=None, shipping_address=None, items=None,
                  options=None):
 
         if method not in EWAY_PAYMENT_METHODS:
@@ -285,14 +285,12 @@ class Request(RapidBaseObject):
         self.customer = customer
         self.shipping_address = shipping_address
 
-        self.items = []
-        self.options = options or []
+        self.items = items or []
 
-        if basket:
-            self.items_from_basket(basket)
-
-        def items_from_basket(self, basket):
-            pass
+        self.options = []
+        if options:
+            for option in options:
+                self.options.append(Option(option))
 
     def __repr__(self):
         return unicode(self)
@@ -536,7 +534,7 @@ class Gateway(object):
             self.base_url = self.SANDBOX_URL
 
     def process_payment(self):
-        pass
+        raise NotImplementedError()
 
     def token_payment(self, order_number, total_incl_tax, redirect_url,
                       billing_address, **kwargs):
@@ -554,7 +552,14 @@ class Gateway(object):
                 billing_address=billing_address,
                 **kwargs
             ),
+            customer_ip=kwargs.get('customer_ip', None),
+            device_id=kwargs.get('device_id', None),
+            #FIXME add the shipping address properly
+            #shipping_address=kwargs.get('shipping_address', None),
+            items=kwargs.get('items', None),
+            options=kwargs.get('options', None),
         )
+
         response = self.access_codes(eway_request)
         return response
 

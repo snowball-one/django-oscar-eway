@@ -135,11 +135,10 @@ class EwayBankcardForm(forms.Form):
         card_number = self.data['EWAY_CARDNUMBER']
         # eway uses 10 visible digits in their obfuscation, we replicate
         # this here to stay compliant
-        mask_length = abs(len(card_number)-10)
         return {
             'card_type': bankcard_type(card_number),
             'name': self.data['EWAY_CARDNAME'],
-            'number': card_number[:7] + mask_length * 'X' + card_number[-4:],
+            'number': "XXXX-XXXX-XXXX-%s" % card_number[-4:],
             'expiry_date': "%s/%s" %(
                 self.data['EWAY_CARDEXPIRYMONTH'],
                 self.data['EWAY_CARDEXPIRYYEAR'],
