@@ -16,7 +16,7 @@ def expiry_month_choices():
         return [("%.2d" % x, "%.2d" % x) for x in xrange(1, 13)]
 
 
-def expiry_year_choices(num_years=5):
+def expiry_year_choices(num_years=6):
     return [(x, x) for x in xrange(date.today().year, date.today().year + num_years)]
 
 
@@ -26,7 +26,7 @@ def start_month_choices():
     return months
 
 
-def start_year_choices(num_years=5):
+def start_year_choices(num_years=6):
     years = [(x, x) for x in xrange(date.today().year - num_years, date.today().year + 1)]
     years.insert(0, ("", "--"))
     return years
@@ -69,7 +69,7 @@ class EwayBankcardForm(forms.Form):
         required=False
     )
     EWAY_CARDEXPIRYYEAR = forms.ChoiceField(
-        choices=expiry_year_choices(5),
+        choices=expiry_year_choices(6),
         label="",
         required=False
     )
