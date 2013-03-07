@@ -15,7 +15,7 @@ setup(
     install_requires=[
         'versiontools>=1.9.1',
         'django-oscar>=0.4',
-        'requests>=0.13.5',
+        'requests>=1.1,<1.2',
         'South>=0.7.6',
     ],
     include_package_data=True,

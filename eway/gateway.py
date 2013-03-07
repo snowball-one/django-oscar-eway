@@ -573,8 +573,7 @@ class Gateway(object):
     def access_codes(self, request):
         url = "%s/AccessCodes" % self.base_url
         response = self._post(url, data=request.serialise())
-
-        response = RapidResponse.from_json(response.json)
+        response = RapidResponse.from_json(response.json())
         txn = EwayTransaction.objects.create(
             txn_url=url,
             txn_method=unicode(request.method),
@@ -595,7 +594,7 @@ class Gateway(object):
     def get_access_code_result(self, access_code):
         request_url = "%s/AccessCode/%s" % (self.base_url, access_code)
         response = self._get(request_url)
-        response = RapidAccessCodeResult.from_json(response.json)
+        response = RapidAccessCodeResult.from_json(response.json())
 
         txn = EwayTransaction.objects.create(
             txn_url=request_url,
