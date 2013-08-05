@@ -4,12 +4,16 @@
 *.sqlite
 *.sqlite3
 *.db
+*.egg
+*.log
 
 .coverage
 .vagrant
 .ropeproject
 
 .tox/
+
+environment.sh
 
 dist/
 cover/
