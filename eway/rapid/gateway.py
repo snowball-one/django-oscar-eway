@@ -1,10 +1,10 @@
+import json
 import requests
 
 from decimal import Decimal as D
 
 from django.conf import settings
 from django.db.models import get_model
-from django.utils import simplejson as json
 from django.utils.translation import ugettext_lazy as _
 
 from eway.rapid import RESPONSE_CODES
@@ -579,7 +579,7 @@ class Gateway(object):
         url = "%s/AccessCodes" % self.base_url
         response = self._post(url, data=request.serialise())
 
-        response = RapidResponse.from_json(response.json)
+        response = RapidResponse.from_json(response.json())
         error_codes = ','.join([e.code for e in response.errors])
         txn = Transaction.objects.create(
             method=unicode(request.method),
@@ -597,7 +597,7 @@ class Gateway(object):
         request_url = "%s/AccessCode/%s" % (self.base_url, access_code)
         response = self._get(request_url)
 
-        response = RapidAccessCodeResult.from_json(response.json)
+        response = RapidAccessCodeResult.from_json(response.json())
         error_codes = ','.join([e.code for e in response.errors])
         txn = Transaction.objects.create(
             request_url=request_url,

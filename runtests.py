@@ -34,6 +34,7 @@ def configure():
             STATICFILES_FINDERS=(
                 'django.contrib.staticfiles.finders.FileSystemFinder',
                 'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+                'compressor.finders.CompressorFinder',
             ),
             TEMPLATE_LOADERS=(
                 'django.template.loaders.filesystem.Loader',
@@ -79,6 +80,7 @@ def configure():
                 'django.contrib.admin',
                 'django.contrib.flatpages',
                 'eway',
+                'compressor',
             ] + get_core_apps(
                 'sandbox.apps.checkout',
             ),
@@ -99,7 +101,7 @@ def configure():
             EWAY_CURRENCY="AUD",
             NOSE_ARGS=[
                 '-s',
-                '--with-spec',
+                '--with-specplugin',
             ],
             **OSCAR_SETTINGS
         )

@@ -74,7 +74,6 @@ SECRET_KEY = '-6q_dgsqmtwtmt)r6-=5zd7hqyteu=1-lhyrqqc)tdr_#!u=qk'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -90,7 +89,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'oscar.apps.promotions.context_processors.promotions',
     'oscar.apps.checkout.context_processors.checkout',
     'oscar.core.context_processors.metadata',
-) 
+)
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -181,8 +180,7 @@ LOGGING = {
     }
 }
 
-
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -191,14 +189,20 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.flatpages',
     'django.contrib.staticfiles',
-    # External apps
+]
+
+THIRD_PARTY_APPS = [
     'django_extensions',
     'debug_toolbar',
-    'haystack',
+    'compressor',
     'sorl.thumbnail',
+    'haystack',
     'south',
-    'eway',
+    'compressor',
 ]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + ['eway']
+
 from oscar import get_core_apps
 INSTALLED_APPS += get_core_apps()
 
@@ -228,8 +232,8 @@ HAYSTACK_CONNECTIONS = {
 OSCAR_SHOP_NAME = 'eWay sandbox'
 OSCAR_SHOP_TAGLINE = 'Integrate eWay payments into Oscar'
 
-EWAY_API_KEY = "A1001CXVUbk5Fl7fwdUy/ZRe0kyZpFedn1P24iWovnLq3yxJRG9cmUKH3jQRth2f2CHznC"
-EWAY_PASSWORD = "xUHGScIfDDGwYyNhocd3"
+EWAY_API_KEY = os.environ.get('EWAY_API_KEY')
+EWAY_PASSWORD = os.environ.get('EWAY_PASSWORD')
 EWAY_USE_SANDBOX = True
 EWAY_CURRENCY = "AUD"
 

@@ -75,7 +75,7 @@ class Transaction(models.Model):
 class ResponseCode(models.Model):
     """
     Error and response codes as defined in the eWay Rapid 3.0 specs
-    linked to multiple transactions so that data does not have to 
+    linked to multiple transactions so that data does not have to
     be replicated in each request.
     """
     code = models.CharField(_("Code"), unique=True, max_length=10)

@@ -3,7 +3,7 @@ from django.utils.unittest import skipUnless
 from django.core.urlresolvers import reverse
 
 from oscar.apps.basket.models import Basket
-from oscar.test.helpers import create_product
+from oscar_testsupport.factories import create_product
 from oscar.apps.address.models import Country
 
 from tests import WebTestCase
@@ -31,7 +31,7 @@ class TestARegisteredUser(WebTestCase):
         self.user.last_name = "Griffin"
         self.user.save()
 
-    def test_can_place_an_order_using_eway_payment(self):
+    def test_can_place_an_order_using_eway_payment_sandbox(self):
         product = create_product()
 
         page = self.get(reverse(

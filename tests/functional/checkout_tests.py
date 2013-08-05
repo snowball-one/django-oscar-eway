@@ -45,7 +45,7 @@ class TestARegisteredUser(WebTestCase):
             args=(product.slug, product.id)
         ))
 
-        page = page.forms[1].submit()
+        page = page.forms[2].submit()
         self.assertEquals(Basket.objects.count(), 1)
 
         page = self.get(reverse('checkout:index'))
