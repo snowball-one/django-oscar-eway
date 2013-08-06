@@ -3,7 +3,6 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.db.models import get_model
-from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from oscar.core.loading import get_class

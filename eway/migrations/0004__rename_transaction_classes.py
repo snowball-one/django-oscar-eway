@@ -11,9 +11,17 @@ class Migration(SchemaMigration):
         db.rename_table('eway_ewaytransaction', 'eway_transaction')
         db.rename_table('eway_ewayresponsecode', 'eway_responsecode')
 
+        db.rename_table('eway_ewayresponsecode_transactions', 'eway_responsecode_transactions')
+        db.rename_column('eway_responsecode_transactions', 'ewayresponsecode_id', 'responsecode_id')
+        db.rename_column('eway_responsecode_transactions', 'ewaytransaction_id', 'transaction_id')
+
     def backwards(self, orm):
         db.rename_table('eway_transaction', 'eway_ewaytransaction')
         db.rename_table('eway_responsecode', 'eway_ewayresponsecode')
+
+        db.rename_column('eway_responsecode_transactions', 'responsecode_id', 'ewayresponsecode_id')
+        db.rename_column('eway_responsecode_transactions', 'transaction_id', 'ewaytransaction_id')
+        db.rename_table('eway_responsecode_transactions', 'eway_ewayresponsecode_transactions')
 
     models = {
         'eway.responsecode': {
