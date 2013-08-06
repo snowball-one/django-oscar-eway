@@ -1,14 +1,18 @@
 language: python
 python:
-  - "2.7"
+- '2.7'
 env:
+  matrix:
   - DJANGO_VERSION=">=1.4,<1.5"
   - DJANGO_VERSION=">=1.5,<1.6"
+  global:
+  - secure: XSiuk44VhrgV94C7RW2X1A9XNVcwv78yZhjInH0dn4Otm2a5/1IepYZZvDHud2JMSF9V3j5G5ypsTNS9JFgpsNdgTJcMLKFQcJ3iSv7vwlUE66e6pGNdX9FA/RWfVlTaIxpRROCTEktGaP1ZpQ4DkJTD0JVxn0AeTntIzmLilAg=
+  - secure: W+I/eWocDKoup1LVOQ5pthfaYcCyMyVJdof7L1K2/u0ulT+VwlkV8Ytuze9rRdEqH3wFTnv21pe6nEyBcDUTyzlhA8PjDAcRVr1gyXlF1lW6iE6wA/JKYLs1Xhu7Ob8UjMvutBroqauA7rbr5BJG//9qK+9wliX2QX8RH2g6syU=
 install:
-  - pip install Django$DJANGO_VERSION
-  - pip install . --use-mirrors
-  - pip install -r requirements.txt --use-mirrors
+- pip install Django$DJANGO_VERSION
+- pip install . --use-mirrors
+- pip install -r requirements.txt --use-mirrors
 script:
-  - coverage run ./runtests.py --with-xunit
+- coverage run ./runtests.py --with-xunit
 after_success:
-  - coveralls
+- coveralls
