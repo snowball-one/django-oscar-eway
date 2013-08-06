@@ -1,11 +1,16 @@
-Werkzeug==0.6.2
-coverage==3.5.1
+-e .
+
+Werkzeug==0.9.3
 django-debug-toolbar==0.9.4
 django-extensions==0.8
-flake8==0.8
-mock==0.7.0
-PyHamcrest==1.6
-South==0.7.3
-django-nose==1.0
+
+mock==1.0.1
 nose==1.1.2
-pinocchio==0.3.1
+django-nose==1.2
+spec==0.11.1
+django-oscar-testsupport==0.1.1
+httpretty==0.6.3
+
+coverage==3.6
+coveralls==0.2
+flake8==2.0

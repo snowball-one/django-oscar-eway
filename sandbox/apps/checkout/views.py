@@ -1,17 +1,18 @@
-from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 
 from oscar.core.loading import get_class
 from oscar.apps.checkout.views import PaymentDetailsView as OscarPaymentDetailsView
-from oscar.apps.payment.models import SourceType, Source
 
-from eway.facade import Facade
-from eway import forms, gateway
+from eway.rapid import forms
+from eway.rapid import gateway
+from eway.rapid.facade import Facade
+from eway import PAYMENT_METHOD_EWAY
 
 OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
 PaymentError = get_class('payment.exceptions', 'PaymentError')
+CheckoutSessionData = get_class('checkout.utils', 'CheckoutSessionData')
 
 
 class PaymentDetailsView(OscarPaymentDetailsView):
@@ -20,11 +21,18 @@ class PaymentDetailsView(OscarPaymentDetailsView):
 
     def get_context_data(self, **kwargs):
         ctx = super(PaymentDetailsView, self).get_context_data(**kwargs)
+
         if self.preview:
-            bankcard_form = forms.EwayBankcardForm(self.request.POST)
+            bankcard_form = forms.BankcardForm(self.request.POST)
         else:
-            bankcard_form = forms.EwayBankcardForm()
+            bankcard_form = forms.BankcardForm()
+
         ctx['bankcard_form'] = kwargs.get('bankcard_form', bankcard_form)
+        ctx['payment_method'] = self.checkout_session.payment_method()
+
+        if not 'form_action_url' in ctx:
+            ctx['form_action_url'] = reverse('checkout:preview')
+
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -38,31 +46,36 @@ class PaymentDetailsView(OscarPaymentDetailsView):
             return error_response
 
         if self.preview:
+            self.checkout_session.pay_by(PAYMENT_METHOD_EWAY)
+
             # We use a custom parameter to indicate if this is an attempt to place an order.
             # Without this, we assume a payment form is being submitted from the
             # payment-details page
             if request.POST.get('action', '') == 'place_order':
                 return self.submit(request.basket)
 
-            try:
-                response = self.get_eway_access_code(request.basket)
-            except gateway.RapidError:
-                messages.error(
-                    self.request,
-                    "invalid payment details. please try again"
-                )
-                return HttpResponseRedirect(reverse('checkout:payment-details'))
-
-            data = self.request.POST.copy()
-            data['EWAY_ACCESSCODE'] = response.access_code
-            return self.render_preview(
-                request,
-                form_action_url=response.form_action_url,
-                bankcard_form=forms.EwayHiddenBankcardForm(data),
-            )
+            return self.render_eway_preview(request)
 
         # Posting to payment-details isn't the right thing to do
         return self.get(request, *args, **kwargs)
+
+    def render_eway_preview(self, request, **kwargs):
+        try:
+            response = self.get_eway_access_code(request.basket)
+        except gateway.RapidError:
+            messages.error(
+                self.request,
+                "invalid payment details. please try again"
+            )
+            return HttpResponseRedirect(reverse('checkout:payment-details'))
+
+        data = self.request.POST.copy()
+        data['EWAY_ACCESSCODE'] = response.access_code
+        return self.render_preview(
+            request,
+            form_action_url=response.form_action_url,
+            bankcard_form=forms.BankcardForm(data),
+        )
 
     def get_eway_access_code(self, basket):
         order_number = self.generate_order_number(basket)
@@ -78,10 +91,10 @@ class PaymentDetailsView(OscarPaymentDetailsView):
 
         redirect_url = "http://%s%s" % (
             self.request.META['HTTP_HOST'],
-            reverse('checkout:preview'),
+            reverse('eway-rapid-response'),
         )
 
-        response = self.facade.start_token_payment(
+        response = self.facade.token_payment(
             order_number,
             total_incl_tax,
             redirect_url=redirect_url,
@@ -91,40 +104,6 @@ class PaymentDetailsView(OscarPaymentDetailsView):
         )
         return response
 
-    def handle_payment(self, order_number, total_incl_tax,
-                       token_customer_id=None, **kwargs):
-
-        response = self.facade.get_access_code_result(
-            self.request.POST.get('access_code')
-        )
-
-        if not response.transaction_status:
-            raise PaymentError(
-                "received error(s) '%s' from eway for transaction #%s" % (
-                    [(c.code, c.message) for c in response.response_message],
-                    response.transaction_id,
-                )
-            )
-
-        #TODO store token_customer_id with user
-        response.token_customer_id
-        #TODO store transaction number
-
-        # Request was successful - record the "payment source".  As this
-        # request was a 'pre-auth', we set the 'amount_allocated' - if we had
-        # performed an 'auth' request, then we would set 'amount_debited'.
-        source_type, _ = SourceType.objects.get_or_create(name='Eway')
-        source = Source(
-            source_type=source_type,
-            currency=settings.EWAY_CURRENCY,
-            amount_debited=total_incl_tax,
-            reference=response.transaction_id,
-        )
-        self.add_payment_source(source)
-
-        # Also record payment event
-        self.add_payment_event('debited', total_incl_tax)
-
     def generate_order_number(self, basket):
         if self.checkout_session.get_order_number():
             return self.checkout_session.get_order_number()
@@ -133,29 +112,3 @@ class PaymentDetailsView(OscarPaymentDetailsView):
         order_number = generator.order_number(basket)
         self.checkout_session.set_order_number(order_number)
         return order_number
-
-#    def do_place_order(self, request):
-#        bankcard_form = BankcardForm(request.POST)
-#        if not bankcard_form.is_valid():
-#            messages.error(request, "Invalid submission")
-#            return HttpResponseRedirect(reverse('checkout:payment-details'))
-#        bankcard = bankcard_form.get_bankcard_obj()
-#
-#        # Call oscar's submit method, passing through the bankcard object so it gets
-#        # passed to the 'handle_payment' method
-#        return self.submit(request.basket, payment_kwargs={'bankcard': bankcard})
-#
-#    def post(self, request, *args, **kwargs):
-#        if request.POST.get('action', '') == 'place_order':
-#            return self.do_place_order(request)
-#
-#        # Check bankcard form is valid
-#        bankcard_form = BankcardForm(request.POST)
-#        if not bankcard_form.is_valid():
-#            ctx = self.get_context_data(**kwargs)
-#            ctx['bankcard_form'] = bankcard_form
-#            return self.render_to_response(ctx)
-#
-#        # Render preview page (with bankcard details hidden)
-#        return self.render_preview(request, bankcard_form=bankcard_form)
-

@@ -8,15 +8,19 @@ setup(
     author="Sebastian Vetter",
     author_email="sebastian.vetter@tangentsnowball.com.au",
     description="eWay payment module for django-oscar (Rapid 3.0)",
-    long_description=open('README.rst').read(),
+    long_description='\n\n'.join([
+        open('README.rst').read(),
+        open('CHANGELOG.rst').read(),
+    ]),
     keywords="oscar,payment,django,ecommerce,eway,rapid3.0",
     license='BSD',
     packages=find_packages(exclude=['sandbox*', 'tests*']),
     install_requires=[
-        'versiontools>=1.9.1',
         'django-oscar>=0.4',
-        'requests>=1.1,<1.2',
-        'South>=0.7.6',
+        'requests>=1.0',
+    ],
+    setup_requires=[
+        'versiontools>=1.9.1',
     ],
     include_package_data=True,
     # See http://pypi.python.org/pypi?%3Aaction=list_classifiers

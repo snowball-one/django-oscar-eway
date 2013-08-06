@@ -1,11 +1,12 @@
-from decimal import Decimal as D
+import json
+import mock
 
-from django.utils import simplejson as json
+from decimal import Decimal as D
 
 from django.test import TestCase
 from django.db.models import get_model
 
-from eway import gateway
+from eway.rapid import gateway
 
 
 Country = get_model('address', 'Country')
@@ -199,7 +200,7 @@ class TestTheAccessCodeResult(TestCase):
             result.access_code,
             "nvt0mwZXN9aU43rsIRPlve3aNziYqA7VHLT3RurzaEvm"
         )
-        self.assertEquals(result.errors, None)
+        self.assertEquals(result.errors, [])
         self.assertEquals(len(result.response_message), 1)
         self.assertEquals(result.response_message[0].code, "A2000")
         self.assertEquals(result.response_code.code, '00')
@@ -215,18 +216,15 @@ class TestTheAccessCodeResult(TestCase):
         self.assertEquals(verification.phone, 0)
 
 
-from mock import MagicMock
-
-
 class TestAccessCodeResponse(TestCase):
 
     def test_containing_errors_is_logged_correctly(self):
-        json_data = json.loads("""{"Customer": {"City": null, "FirstName": null, "Title": null, "LastName": null, "CardStartYear": null, "Comments": null, "State": null, "JobDescription": null, "TokenCustomerID": null, "Email": null, "Fax": null, "Phone": null, "Street1": null, "Street2": null, "Mobile": null, "CardNumber": null, "CardExpiryMonth": null, "Url": null, "Country": null, "CardExpiryYear": null, "CardIssueNumber": null, "CardStartMonth": null, "PostalCode": null, "Reference": null, "CompanyName": null, "CardName": null, "IsActive": false}, "FormActionURL": null, "Errors": "V6042,V6043", "Payment": {"InvoiceReference": "100215", "TotalAmount": 2590, "CurrencyCode": "AUD", "InvoiceNumber": null, "InvoiceDescription": null}, "AccessCode": null}""")
-        RequestsResponse = MagicMock(name='RequestsResponse')
-        RequestsResponse.json = MagicMock(return_value=json_data)
+        RequestsResponse = mock.MagicMock(name='RequestsResponse')
+        RequestsResponse.json = mock.Mock()
+        RequestsResponse.json.return_value = json.loads("""{"Customer": {"City": null, "FirstName": null, "Title": null, "LastName": null, "CardStartYear": null, "Comments": null, "State": null, "JobDescription": null, "TokenCustomerID": null, "Email": null, "Fax": null, "Phone": null, "Street1": null, "Street2": null, "Mobile": null, "CardNumber": null, "CardExpiryMonth": null, "Url": null, "Country": null, "CardExpiryYear": null, "CardIssueNumber": null, "CardStartMonth": null, "PostalCode": null, "Reference": null, "CompanyName": null, "CardName": null, "IsActive": false}, "FormActionURL": null, "Errors": "V6042,V6043", "Payment": {"InvoiceReference": "100215", "TotalAmount": 2590, "CurrencyCode": "AUD", "InvoiceNumber": null, "InvoiceDescription": null}, "AccessCode": null}""")
 
         eway = gateway.Gateway('no_key', 'no_password')
-        eway._post = MagicMock(name='_post')
+        eway._post = mock.MagicMock(name='_post')
         eway._post.return_value =  RequestsResponse
 
         response = eway.access_codes(gateway.Request(
@@ -238,11 +236,11 @@ class TestAccessCodeResponse(TestCase):
                 currency_code="AUD",
             )
         ))
-        txn = gateway.EwayTransaction.objects.get(
+        txn = gateway.Transaction.objects.get(
             order_number=response.payment.invoice_reference
         )
         self.assertEquals(
             txn.response_json,
             json.dumps(RequestsResponse.json(), indent=4)
         )
-        self.assertEquals(gateway.EwayResponseCode.objects.count(), 2)
+        self.assertEquals(gateway.ResponseCode.objects.count(), 2)

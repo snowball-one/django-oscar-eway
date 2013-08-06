@@ -2,7 +2,7 @@ from django.conf import settings
 
 from oscar.core.loading import get_classes
 
-from eway import gateway
+from eway.rapid import gateway
 
 PURCHASE = 'Purchase'
 
@@ -38,7 +38,7 @@ class Facade(object):
             gateway.EWAY_CURRENCY
         )
 
-    def start_token_payment(self, order_number, total_incl_tax, redirect_url,
+    def token_payment(self, order_number, total_incl_tax, redirect_url,
                             billing_address, token_customer_id=None,
                             shipping_address=None, customer_ip=None,
                             basket=None, options=None, **kwargs):

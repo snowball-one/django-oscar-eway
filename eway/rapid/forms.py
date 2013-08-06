@@ -13,26 +13,55 @@ Bankcard = get_class('payment.utils', 'Bankcard')
 
 
 def expiry_month_choices():
-        return [("%.2d" % x, "%.2d" % x) for x in xrange(1, 13)]
+    """
+    Get a list of numeric month as tuples (*numeric month*, *numeric month*).
+    The months are numbered one through 12 according to ISO standard.
+    """
+    return [("%.2d" % x, "%.2d" % x) for x in xrange(1, 13)]
 
 
-def expiry_year_choices(num_years=6):
-    return [(x, x) for x in xrange(date.today().year, date.today().year + num_years)]
+def expiry_year_choices(num_years=5):
+    """
+    Get a list of years starting with the current year and going
+    *num_years* into the future. The returned list contains
+    tuples of the form (*numeric year*, *numeric lyear*) with years
+    in 4-digit notation, e.g. 2016.
+    """
+    return [(x, x) for x in xrange(date.today().year,
+                                   date.today().year + num_years)]
 
 
 def start_month_choices():
-    months = [("%.2d" % x, "%.2d" % x) for x in xrange(1, 13)]
-    months.insert(0, ("", "--"))
-    return months
+    """
+    Get a list of numeric month as tuples (*numeric month*, *numeric month*).
+    The months are numbered one through 12 according to ISO standard. The first
+    item in the list is '--' to allow for not selecting a month.
+    """
+    return [("", _("--"))] + expiry_month_choices()
 
 
-def start_year_choices(num_years=6):
-    years = [(x, x) for x in xrange(date.today().year - num_years, date.today().year + 1)]
-    years.insert(0, ("", "--"))
+def start_year_choices(num_years=5):
+    """
+    Get a list of years for the starting date of a bank card with the
+    range of years  starting *num_years* ago ranging up to the current
+    year. The returned list contains tuples of the form (*numeric year*,
+    *numeric year*) in 4-digit notation, e.g. 2016. The first item in the
+    list is '--' to allow for not selecting a year.
+    """
+    years = [("", _("--"))]
+    for year in xrange(date.today().year-num_years, date.today().year+1):
+        years.append((year, year))
     return years
 
 
-class EwayBankcardForm(forms.Form):
+class BankcardForm(forms.Form):
+    """
+    A form specific for eWay as specified in the Rapid 3.0 API documentation.
+    Submitting the details directly to eWay requires the form's input field
+    to have the exact names specified in the API docs. The field names in this
+    form therefore violate PEP8 knowingly to remain explicit and not introduce
+    too much magic.
+    """
     token_customer_id = forms.ChoiceField(
         required=False,
         label=_("Existing cards"),
@@ -94,10 +123,10 @@ class EwayBankcardForm(forms.Form):
         user = kwargs.pop('user', None)
         is_hidden = kwargs.pop('is_hidden', None)
 
-        super(EwayBankcardForm, self).__init__(*args, **kwargs)
+        super(BankcardForm, self).__init__(*args, **kwargs)
 
         if user and user.is_authenticated():
-            choices = self.get_existing_card_choices(user)
+            choices = self.get_existing_cards(user)
             self.fields['token_customer_id'].choices = choices
         else:
             self.fields['token_customer_id'].widget = forms.HiddenInput()
@@ -106,7 +135,12 @@ class EwayBankcardForm(forms.Form):
             for fname in self.fields:
                 self.fields[fname].widget = forms.HiddenInput()
 
-    def get_existing_card_choices(self, user):
+    def get_existing_card(self, user):
+        """
+        Get a list of tuples for existing cards of the specified *user*.
+        Each tuple contains the ``token_customer_id`` and the obfuscated
+        bankcard number.
+        """
         existing_cards = BankcardModel.objects.filter(
             user=user,
             partner_reference__isnull=False
@@ -114,6 +148,14 @@ class EwayBankcardForm(forms.Form):
         return [(c.partner_reference, c.number) for c in existing_cards]
 
     def check_is_required(self, field_name):
+        """
+        Check if the field with *field_name* is required based on the
+        selection of a ``token_customer_id`` indicating the use of an
+        existing payment.
+        A field is required if no ``token_customer_id`` is provided
+        and having the field *field_name* empty will raise a
+        ``ValidationError``.
+        """
         data = self.cleaned_data[field_name]
         if not data and not self.cleaned_data['token_customer_id']:
             raise forms.ValidationError(_("This field is required"))
@@ -132,18 +174,44 @@ class EwayBankcardForm(forms.Form):
         return self.check_is_required('EWAY_CARDEXPIRYYEAR')
 
     def get_obfuscated_kwargs(self):
+        """
+        Get a dictionary containing the obfuscated bank card details used
+        in the eway form. The card number is **not** stored in plain
+        text but is obfuscated in the same way eWay obfuscates their card
+        numers (first 6 and last 4 digits visible).
+        """
         card_number = self.data['EWAY_CARDNUMBER']
-        # eway uses 10 visible digits in their obfuscation, we replicate
-        # this here to stay compliant
         return {
             'card_type': bankcard_type(card_number),
             'name': self.data['EWAY_CARDNAME'],
-            'number': "XXXX-XXXX-XXXX-%s" % card_number[-4:],
+            'number': self.get_obfuscated_card_number(card_number),
             'expiry_date': "%s/%s" %(
                 self.data['EWAY_CARDEXPIRYMONTH'],
                 self.data['EWAY_CARDEXPIRYYEAR'],
             ),
         }
+
+    @classmethod
+    def get_obfuscated_card_number(cls, number):
+        """
+        Get an obfuscated version of the bankcard *number* with several
+        digits replaced with 'X'. We obfuscate using the same method as
+        eWay uses which shows the first six and the last four digits. For
+        a credit card '4444333322221111' this method returns
+        '444433XXXXXX1111'. If *number* has less than 11 digits, the number
+        is obfuscated completely to avoid accidentally storing a complete
+        bankcard number.
+        """
+        # if the number is shorter than 10 digits the whole number would
+        # show up, in this special case we obfuscate every digit just to
+        # be sure that we don't accidentally store actual credit card data
+        if len(number) < 11:
+            return len(number) * 'X'
+
+        # eway uses 10 visible digits in their obfuscation, we replicate
+        # this here to stay compliant
+        start, masked, end = number[:6], number[6:-4], number[-4:]
+        return "".join([start, len(masked) * 'X', end])
 
     def get_bankcard_obj(self):
         """
