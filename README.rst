@@ -43,16 +43,29 @@ during the payment process and will make tracking down errors easier::
 Integrate eWay In The Checkout
 ------------------------------
 
-To use only eWay as a payment method in your checkout, you only need to hook
-the views provided by this package into your application. Add the following to
-``urls.py`` and you should be able to use eWay and their sandbox to go through
-the checkout::
+The simplest way to integrate your project's checkout with eWay is to use the
+``EwayPaymentDetailMixin`` to extend your ``PaymentDetailView``. All you need
+to do is create a new ``PaymentDetailView`` in your checkout app, import the
+mixin and add it to the view class. It should now look similar to this::
+
+    from oscar.apps.checkout.views import PaymentDetailsView as OscarPaymentDetailsView
+    from eway.rapid.mixins import EwayPaymentDetailMixin
+
+    class PaymentDetailsView(EwayPaymentDetailMixin, OscarPaymentDetailsView):
+        template_name = 'checkout/payment_details.html'
+
+In addition to that you need to hook up the view that is called by the eWay
+response redirect. A default URL can be defined by adding the following line to
+your URL patterns::
 
     urlpatterns = patterns('',
         ...
         url(r'^checkout/eway/', include('eway.rapid.urls')),
         ...
     )
+
+Now it's time to try it out and see if it works :)
+
 
 Further Documentation
 ---------------------
@@ -67,7 +80,7 @@ Contributing
 
 Your need more functionality, found a bug or simply want to help us make this
 package better? Create a fork, make your changes and open a pull request. We'll
-be thankful fort it!
+be thankful for it!
 
 
 License
