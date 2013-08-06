@@ -6,6 +6,7 @@ from decimal import Decimal as D
 from django.conf import settings
 from django.db.models import get_model
 from django.utils.translation import ugettext_lazy as _
+from django.core.exceptions import ImproperlyConfigured
 
 from eway.rapid import RESPONSE_CODES
 
@@ -538,7 +539,17 @@ class Gateway(object):
     def __init__(self, api_key, password, use_sandbox=False):
         self.base_url = self.API_URL
         self.api_key = api_key
+        if not self.api_key:
+            raise ImproperlyConfigured(
+                "API key for eWay required but can't find EWAY_API_KEY "
+                "in setting. Please check and try again."
+            )
         self.password = password
+        if not self.password:
+            raise ImproperlyConfigured(
+                "API key for eWay required but can't find EWAY_PASSWORD "
+                "in setting. Please check and try again."
+            )
 
         if settings.EWAY_USE_SANDBOX:
             self.base_url = self.SANDBOX_URL
