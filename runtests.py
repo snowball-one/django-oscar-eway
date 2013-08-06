@@ -13,6 +13,8 @@ from oscar import OSCAR_MAIN_TEMPLATE_DIR
 
 location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
 
+EWAY_RUN_EXTERNAL_TESTS = int(os.environ.get('EWAY_RUN_EXTERNAL_TESTS', 0))
+
 
 def configure():
     if not settings.configured:
@@ -95,9 +97,10 @@ def configure():
                     'ENGINE': 'haystack.backends.simple_backend.SimpleEngine',
                 },
             },
-            EWAY_API_KEY="A1001CXVUbk5Fl7fwdUy/ZRe0kyZpFedn1P24iWovnLq3yxJRG9cmUKH3jQRth2f2CHznC",
-            EWAY_PASSWORD="xUHGScIfDDGwYyNhocd3",
+            EWAY_API_KEY=os.environ.get('EWAY_API_KEY'),
+            EWAY_PASSWORD=os.environ.get('EWAY_PASSWORD'),
             EWAY_USE_SANDBOX=True,
+            EWAY_RUN_EXTERNAL_TESTS=(EWAY_RUN_EXTERNAL_TESTS > 0),
             EWAY_CURRENCY="AUD",
             NOSE_ARGS=[
                 '-s',
