@@ -9,7 +9,7 @@ eWay Payment for Oscar
     :target: https://coveralls.io/r/tangentlabs/django-oscar-eway?branch=master
 
 
-**Disclaimer:** The eWay API defined in this project is *incomplete* and
+**Disclaimer:** The integration to the eWay API defined in this project is *incomplete* and
 currently only provides the `Token Payment`_ using `eWay's Rapid 3.0 API`_. We
 haven't had the need or time to provide any other part(s) of the API, yet.
 Contributions to extend the functionality are more than welcome.
