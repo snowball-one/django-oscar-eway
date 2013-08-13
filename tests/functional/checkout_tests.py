@@ -185,6 +185,11 @@ class TestARegisteredUser(WebTestCase):
 
         self.assertRedirects(page, reverse("checkout:payment-details"))
         self.assertEquals(Order.objects.count(), 0)
+        page = page.follow()
+        self.assertContains(
+            page,
+            'We experienced a problem while processing your payment'
+        )
 
 
 GET_ACCESS_CODE_RESPONSE = """{
