@@ -130,7 +130,7 @@ class TestARegisteredUser(WebTestCase):
         #page = page.follow()
 
     @httprettified
-    def test_redirect_to_payment_details_on_error(self):
+    def test_gets_redirected_to_payment_details_on_error(self):
         page = self.go_to_payment_detail_page()
 
         access_code = "nvt0mwZXN9aU43rsIRPlve3aNziYqA7VHLT3RurzaEvm"
