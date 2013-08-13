@@ -4,6 +4,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.db.models import get_model
 from django.utils.translation import ugettext_lazy as _
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 from oscar.core.loading import get_class
 
@@ -96,3 +98,11 @@ class RapidResponseView(PaymentDetailsView):
 
         # Also record payment event
         self.add_payment_event(PURCHASE, total_incl_tax)
+
+    def render_to_response(self, context, **response_kwargs):
+        if 'error' in context:
+            return HttpResponseRedirect(reverse('checkout:payment-details'))
+        return super(RapidResponseView, self).render_to_response(
+            context,
+            **response_kwargs
+        )
