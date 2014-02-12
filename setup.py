@@ -16,7 +16,7 @@ setup(
     license='BSD',
     packages=find_packages(exclude=['sandbox*', 'tests*']),
     install_requires=[
-        'django-oscar>=0.4',
+        'django-oscar>=0.4,<0.6',
         'requests>=1.0',
     ],
     setup_requires=[
