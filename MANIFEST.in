@@ -1,2 +1,3 @@
 include *.rst
 recursive-include eway/templates *.html
+recursive-include eway/static *
