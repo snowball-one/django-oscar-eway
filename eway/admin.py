@@ -1,46 +1,38 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.contrib import admin
 from django.db.models import get_model
 
 
-Transaction = get_model('eway', 'Transaction')
-ResponseCode = get_model('eway', 'ResponseCode')
+class RequestLogInline(admin.TabularInline):
+    model = get_model('eway', 'RequestLog')
+    readonly_fields = (
+        'method', 'response_code', 'response_message',
+        'errors', 'date_created', 'date_modified')
+    exclude = ('url', 'request', 'response')
+    extra = 0
+    can_delete = False
 
-
-class ErrorInline(admin.StackedInline):
-    model = ResponseCode.transactions.through
-
-class ResponseCodeAdmin(admin.ModelAdmin):
-    inlines = [
-        ErrorInline,
-    ]
-    exclude = ('transactions',)
 
 class TransactionAdmin(admin.ModelAdmin):
-    inlines = [
-        ErrorInline,
-    ]
-    list_display = [
-        'method',
-        'transaction_id',
-        'amount',
-        'response_message',
-        'token_customer_id',
-        'date_created',
-    ]
-    readonly_fields = [
-        'method',
-        'request_url',
-        'transaction_id',
-        'amount',
-        'response_code',
-        'response_message',
-        'token_customer_id',
-        'date_created',
-        'request_json',
-        'response_json',
-        'order_number',
-    ]
+    search_fields = (
+        'access_code', 'transaction_id', 'token_customer_id', 'order_number')
+    list_display = (
+        'access_code', 'transaction_id', 'amount', 'token_customer_id',
+        'order_number')
+
+    inlines = [RequestLogInline]
 
 
-admin.site.register(Transaction, TransactionAdmin)
-admin.site.register(ResponseCode)
+class RequestLogAdmin(admin.ModelAdmin):
+    search_fields = ('request', 'response')
+    list_display = (
+        'transaction', 'method', 'url', 'response_code', 'response_message')
+    readonly_fields = (
+        'transaction', 'url', 'method', 'request', 'response', 'response_code',
+        'response_message', 'errors', 'date_created', 'date_modified')
+
+
+admin.site.register(get_model('eway', 'Transaction'), TransactionAdmin)
+admin.site.register(get_model('eway', 'RequestLog'), RequestLogAdmin)

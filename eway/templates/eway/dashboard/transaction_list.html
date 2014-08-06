@@ -1,0 +1,81 @@
+{% extends "dashboard/layout.html" %}
+{% load i18n %}
+{% load url from future %}
+{% load currency_filters %}
+
+{% block title %}
+{% trans "eWay Transactions" %} | {{ block.super }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">	
+    <li>	
+        <a href="{% url "dashboard:index" %}">{% trans "Dashboard" %}</a>	
+        <span class="divider">/</span>	
+    </li>	
+    <li class="active">{% trans "eWay Transactions" %}</li>	
+</ul>
+{% endblock %}
+
+{% block header %}
+<div class="page-header">
+    <h1>{% trans "eWay Transactions" %}</h1>
+</div>
+{% endblock header %}
+
+{% block dashboard_content %}
+<table class="table-bordered table">
+
+    <caption>
+        <h3>
+            <i class="icon-money icon-large"></i>
+            {% trans "Transactions" %}
+        </h3>
+    </caption>
+
+    <tr>
+        <th>{% trans "Transaction" %}</th>
+        <th>{% trans "Order number" %}</th>
+        <th>{% trans "Total amount" %}</th>
+        <th>{% trans "Status" %}</th>
+        <th>{% trans "Result" %}</th>
+        <th></th>
+    </tr>
+    {% for transaction in transactions %}
+
+    <tr class="{% if  transaction.status == transaction.IN_PROGRESS %}warning{% elif transaction.status == transaction.COMPLETED %}success{% else %}error{% endif %}">
+        <td>
+            <a href="{% url "eway-dashboard:transaction-detail" pk=transaction.id %}">
+                {{ transaction.transaction_id|default:"No ID available." }}
+            </a>
+        </td>
+        <td>
+            {% if transaction.order_number %}
+            <a href="{% url "dashboard:order-detail" number=transaction.order_number %}">
+            {% endif %}
+                {{ transaction.order_number|default:"-" }}
+            {% if transaction.order_number %}
+            </a>
+            {% endif %}
+        </td>
+        <td>{{ transaction.amount|currency }}</td>
+        <td>
+            {{ transaction.status }}
+        </td>
+        <td>
+            {{ transaction.response_message }}
+        </td>
+        <td>
+            <a href="{% url "eway-dashboard:transaction-detail" pk=transaction.id %}" class="btn">{% trans "View" %}</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="6">{% trans "No transactions to display." %}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% include "partials/pagination.html" %}
+{% endblock %}

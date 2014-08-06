@@ -135,7 +135,7 @@ class BankcardForm(forms.Form):
             for fname in self.fields:
                 self.fields[fname].widget = forms.HiddenInput()
 
-    def get_existing_card(self, user):
+    def get_existing_cards(self, user):
         """
         Get a list of tuples for existing cards of the specified *user*.
         Each tuple contains the ``token_customer_id`` and the obfuscated
@@ -180,14 +180,14 @@ class BankcardForm(forms.Form):
         text but is obfuscated in the same way eWay obfuscates their card
         numers (first 6 and last 4 digits visible).
         """
-        card_number = self.data['EWAY_CARDNUMBER']
+        card_number = self.data.get('EWAY_CARDNUMBER', '')
         return {
-            'card_type': bankcard_type(card_number),
-            'name': self.data['EWAY_CARDNAME'],
+            'card_type': bankcard_type(card_number) or '',
+            'name': self.data.get('EWAY_CARDNAME', ''),
             'number': self.get_obfuscated_card_number(card_number),
-            'expiry_date': "%s/%s" %(
-                self.data['EWAY_CARDEXPIRYMONTH'],
-                self.data['EWAY_CARDEXPIRYYEAR'],
+            'expiry_date': "%s/%s" % (
+                self.data.get('EWAY_CARDEXPIRYMONTH', ''),
+                self.data.get('EWAY_CARDEXPIRYYEAR', ''),
             ),
         }
 

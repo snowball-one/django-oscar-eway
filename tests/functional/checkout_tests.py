@@ -13,6 +13,9 @@ from oscar_testsupport.factories import create_product
 Order = get_model('order', 'Order')
 OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
 
+Transaction = get_model('eway', 'Transaction')
+RequestLog = get_model('eway', 'RequestLog')
+
 
 class MockRequestResponse(object):
     json = {}
@@ -31,8 +34,8 @@ class TestARegisteredUser(WebTestCase):
             iso_3166_1_a3='AUS',
             iso_3166_1_numeric=36,
             printable_name="Australia",
-            is_shipping_country=True
-        )
+            is_shipping_country=True)
+
         self.user.first_name = "Peter"
         self.user.last_name = "Griffin"
         self.user.save()
@@ -40,10 +43,8 @@ class TestARegisteredUser(WebTestCase):
     def go_to_payment_detail_page(self):
         product = create_product()
 
-        page = self.get(reverse(
-            'catalogue:detail',
-            args=(product.slug, product.id)
-        ))
+        page = self.get(
+            reverse('catalogue:detail', args=(product.slug, product.id)))
 
         page = page.forms[2].submit()
         self.assertEquals(Basket.objects.count(), 1)
@@ -87,9 +88,7 @@ class TestARegisteredUser(WebTestCase):
                 'card_name': 'Peter Griffin',
                 'form_action_url': "http://localhost:8000/test",
                 'order_number': order_number,
-            },
-            content_type='text/json',
-        )
+            }, content_type='text/json')
 
         card_form = page.form
         card_form['EWAY_CARDNAME'] = 'Visa'
@@ -113,13 +112,10 @@ class TestARegisteredUser(WebTestCase):
                 'order_number': order_number,
                 'response_code': '00',
                 'transaction_status': 'true'
-            },
-            content_type='text/json',
-        )
+            }, content_type='text/json')
 
         page = self.get(reverse('eway-rapid-response'), params={
-            'AccessCode': access_code,
-        })
+            'AccessCode': access_code})
 
         self.assertRedirects(page, reverse("checkout:thank-you"))
         self.assertEquals(Order.objects.count(), 1)
@@ -127,7 +123,13 @@ class TestARegisteredUser(WebTestCase):
         order = Order.objects.get(number=order_number)
         self.assertEquals(order.user, self.user)
 
-        #page = page.follow()
+        self.assertEquals(Transaction.objects.count(), 1)
+        self.assertEquals(RequestLog.objects.count(), 2)
+
+        transaction = Transaction.objects.all()[0]
+        self.assertEquals(
+            transaction.request_logs.all()[0].response_code, '00')
+        self.assertEquals(transaction.status, transaction.COMPLETED)
 
     @httprettified
     def test_gets_redirected_to_payment_details_on_error(self):
@@ -149,9 +151,7 @@ class TestARegisteredUser(WebTestCase):
                 'card_name': 'Peter Griffin',
                 'form_action_url': "http://localhost:8000/test",
                 'order_number': order_number,
-            },
-            content_type='text/json',
-        )
+            }, content_type='text/json')
 
         card_form = page.form
         card_form['EWAY_CARDNAME'] = 'Visa'
@@ -175,21 +175,24 @@ class TestARegisteredUser(WebTestCase):
                 'order_number': order_number,
                 'response_code': '06',
                 'transaction_status': 'false',
-            },
-            content_type='text/json',
-        )
+            }, content_type='text/json')
 
         page = self.get(reverse('eway-rapid-response'), params={
-            'AccessCode': access_code,
-        })
+            'AccessCode': access_code})
 
         self.assertRedirects(page, reverse("checkout:payment-details"))
         self.assertEquals(Order.objects.count(), 0)
         page = page.follow()
         self.assertContains(
-            page,
-            'We experienced a problem while processing your payment'
-        )
+            page, 'We experienced a problem while processing your payment')
+
+        self.assertEquals(Transaction.objects.count(), 1)
+        self.assertEquals(RequestLog.objects.count(), 2)
+
+        transaction = Transaction.objects.all()[0]
+        self.assertEquals(
+            transaction.request_logs.all()[0].response_code, '06')
+        self.assertEquals(transaction.status, transaction.COMPLETED)
 
 
 GET_ACCESS_CODE_RESPONSE = """{
