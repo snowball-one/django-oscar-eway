@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals, absolute_import
 from datetime import datetime
 
 from django.conf import settings
@@ -9,8 +11,9 @@ from django.core.urlresolvers import reverse
 
 from oscar.core.loading import get_class
 
-from eway import PURCHASE, PAYMENT_METHOD_EWAY
-from eway.rapid.facade import Facade
+from .facade import Facade
+from .. import compat
+from .. import PURCHASE, PAYMENT_METHOD_EWAY
 
 
 BankcardModel = get_model('payment', 'Bankcard')
@@ -26,7 +29,11 @@ class RapidResponseView(PaymentDetailsView):
 
     def get(self, request, *args, **kwargs):
         self.access_code = request.GET.get('AccessCode', None)
-        return self.submit(request.basket)
+
+        if compat.USES_NEW_STRATEGY_PATTERN:
+            return self.submit(**self.build_submission())
+        else:
+            return self.submit(request.basket)
 
     def get_bankcard_details(self):
         kwargs = self.checkout_session._get('bankcard', 'bankcard_fields')
@@ -61,16 +68,23 @@ class RapidResponseView(PaymentDetailsView):
         else:
             BankcardModel.objects.filter(pk=bankcard.id).update(**kwargs)
 
-    def handle_payment(self, order_number, total_incl_tax, **kwargs):
+    def handle_payment(self, order_number, total, **kwargs):
         response = self.facade.get_access_code_result(self.access_code)
+
+        # this is required because the new strategy pattern introduced in
+        # Oscar 0.6 changes the data passed into this method. This is purely
+        # for backwards-compatibility
+        try:
+            total_incl_tax = total.incl_tax
+        except AttributeError:
+            total_incl_tax = total
 
         if not response.transaction_status:
             messages.error(
                 self.request,
-                _("We experienced a problem while processing your payment. Please "
-                  "check your card details and try again. If the problem persists, "
-                  "please contact us.")
-            )
+                _("We experienced a problem while processing your payment. "
+                  "Please check your card details and try again. If the "
+                  "problem persists, please contact us."))
             raise PaymentError(
                 "received error(s) '%s' from eway for transaction #%s" % (
                     [(c.code, c.message) for c in response.response_message],

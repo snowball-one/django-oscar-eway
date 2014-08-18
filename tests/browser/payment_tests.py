@@ -69,11 +69,17 @@ def test_registered_user_can_make_payment(browser, live_server, customer,
 
     browser.visit(live_server.url + reverse('checkout:index'))
 
-    browser.fill_form({
+    form_data = {
         'title': '', 'first_name': "Peter", 'last_name': "Griffin",
         'line1': "31 Spooner St", 'line4': "Quahog", 'state': "Victoria",
-        'country': 'AU', 'postcode': "3070", 'phone_number': "+61 (3) 121 121",
-        'notes': "Some additional notes"})
+        'postcode': "3070", 'phone_number': "+61 (0)3 1121 1121",
+        'notes': "Some additional notes"}
+
+    # the country field will be hidden in Oscar 0.6+
+    if browser.is_element_present_by_name('country'):
+        form_data['country'] = 'AU'
+
+    browser.fill_form(form_data)
     browser.find_by_css('[type=submit]').click()
     assert browser.is_text_present('Enter payment details')
 
@@ -88,7 +94,7 @@ def test_registered_user_can_make_payment(browser, live_server, customer,
 
     assert Order.objects.count() == 1
     order = Order.objects.all()[0]
-    assert browser.is_text_present('#{}'.format(order.number))
+    assert browser.is_text_present('{}'.format(order.number))
 
     assert Transaction.objects.count() == 1
     transaction = Transaction.objects.all()[0]

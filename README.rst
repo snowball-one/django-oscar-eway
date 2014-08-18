@@ -2,11 +2,11 @@
 eWay Payment for Oscar
 ======================
 
-.. image:: https://travis-ci.org/tangentlabs/django-oscar-eway.png?branch=master
-    :target: https://travis-ci.org/tangentlabs/django-oscar-eway?branch=master
+.. image:: https://travis-ci.org/snowball-one/django-oscar-eway.png?branch=master
+    :target: https://travis-ci.org/snowball-one/django-oscar-eway?branch=master
 
-.. image:: https://coveralls.io/repos/tangentlabs/django-oscar-eway/badge.png?branch=master
-    :target: https://coveralls.io/r/tangentlabs/django-oscar-eway?branch=master
+.. image:: https://coveralls.io/repos/snowball-one/django-oscar-eway/badge.png?branch=master
+    :target: https://coveralls.io/r/snowball-one/django-oscar-eway?branch=master
 
 
 **Disclaimer:** The integration to the eWay API defined in this project is *incomplete* and
@@ -20,7 +20,7 @@ Installation
 
 You can install ``django-oscar-eway`` directly from github by running::
 
-    $ pip install git+https://github.com/tangentlabs/django-oscar-eway.git#egg=django-oscar-eway-dev
+    $ pip install git+https://github.com/snowball-one/django-oscar-eway.git#egg=django-oscar-eway-dev
 
 After you have successfully installed it, you should add the app to your
 ``INSTALLED_APPS``::

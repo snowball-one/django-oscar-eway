@@ -19,5 +19,6 @@ environment.sh
 dist/
 cover/
 public/
+htmlcov/
 docs/build/
 sandbox/media/

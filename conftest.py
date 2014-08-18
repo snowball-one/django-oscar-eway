@@ -25,7 +25,6 @@ def pytest_configure():
                 }
             },
             SITE_ID=1,
-            MEDIA_ROOT=location('public/media'),
             MEDIA_URL='/media/',
             STATIC_URL='/static/',
             STATICFILES_DIRS=(location('static/'),),

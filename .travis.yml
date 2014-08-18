@@ -8,15 +8,22 @@ env:
     - secure: W+I/eWocDKoup1LVOQ5pthfaYcCyMyVJdof7L1K2/u0ulT+VwlkV8Ytuze9rRdEqH3wFTnv21pe6nEyBcDUTyzlhA8PjDAcRVr1gyXlF1lW6iE6wA/JKYLs1Xhu7Ob8UjMvutBroqauA7rbr5BJG//9qK+9wliX2QX8RH2g6syU=
 
   matrix:
-    - TOXENV=py2.7-dj1.4-oscar0.5
-    - TOXENV=py2.7-dj1.5-oscar0.5
-    - TOXENV=py2.7-dj1.6-oscar0.5
+    - TOXENV=py27-django14-oscar05-envtest
+    - TOXENV=py27-django15-oscar05-envtest
+    - TOXENV=py27-django16-oscar05-envtest
+
+    - TOXENV=py27-django14-oscar06-envtest
+    - TOXENV=py27-django15-oscar06-envtest
+    - TOXENV=py27-django16-oscar06-envtest
+
 before_install:
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
 
 install:
-  - pip install tox
+    # Tox 1.8 installation required for new envlist generation feature
+    # and can be removed after 1.8 is available on PyPI
+  - pip install https://bitbucket.org/hpk42/tox/get/d835cca51418.zip
 
 script:
   - tox

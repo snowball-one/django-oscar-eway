@@ -1,5 +1,6 @@
 {% extends 'oscar/checkout/preview.html' %}
 {% load i18n %}
+{% load url from future %}
 {% load staticfiles %}
 {% load currency_filters %}
 
@@ -11,7 +12,7 @@
 	<div class="well well-success">
 		<p>{{ order_total_incl_tax|currency }} will be debited from your bankcard.</p>
 		<div class="alert-actions">
-			<a href="{% url checkout:payment-details %}" class="btn">Change payment details</a>
+			<a href="{% url "checkout:payment-details" %}" class="btn">Change payment details</a>
 		</div>
 	</div>
 </div>

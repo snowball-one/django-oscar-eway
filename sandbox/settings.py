@@ -4,9 +4,12 @@ import os
 
 from django.utils.translation import ugettext_lazy as _
 
+# Get name of environment from tox.
+ENV_NAME = os.getenv('ENV_NAME', 'sandbox')
 
 # Django settings for oscar project.
 PROJECT_DIR = os.path.dirname(__file__)
+
 location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
 
 DEBUG = True
@@ -23,13 +26,11 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': location('sandbox.sqlite'),
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
+        'NAME': location('{}.sqlite'.format(ENV_NAME)),
     }
 }
+
+print "Using database:", DATABASES['default']['NAME']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -102,9 +103,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.transaction.TransactionMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'oscar.apps.basket.middleware.BasketMiddleware',
 )
 

@@ -1,20 +1,27 @@
-Werkzeug==0.9.3
-django-debug-toolbar==0.9.4
-django-extensions==0.8
+Werkzeug==0.9.6
+django-debug-toolbar==1.2.1
+django-extensions==1.3.10
 
-pytest==2.6.0
+# Tox 1.8 installation required for new envlist generation feature
+https://bitbucket.org/hpk42/tox/get/d835cca51418.zip
+
+pytest==2.6.1
 pytest-cache==1.0
 pytest-django==2.6.2
 pytest-pep8==1.0.6
 pytest-sugar==0.3.4
 pytest-splinter==1.0.3
+
+WebTest==2.0.15
+django-webtest==1.7.7
+
 splinter==0.6.0
 selenium==2.42.1
 
 mock==1.0.1
-django-oscar-testsupport==0.1.1
-httpretty==0.6.3
+django-oscar-testsupport==0.4.1
+httpretty==0.8.3
 
-coverage==3.6
-coveralls==0.2
-flake8==2.0
+coverage==3.7.1
+coveralls==0.4.2
+flake8==2.2.2

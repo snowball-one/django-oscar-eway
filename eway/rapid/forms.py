@@ -4,12 +4,17 @@ from django import forms
 from django.db.models import get_model
 from django.utils.translation import ugettext_lazy as _
 
-from oscar.core.loading import get_class
 from oscar.apps.payment import forms as payment_forms
-from oscar.apps.payment.forms import bankcard_type
 
 BankcardModel = get_model('payment', 'Bankcard')
-Bankcard = get_class('payment.utils', 'Bankcard')
+
+try:
+    from oscar.apps.payment.bankcards import bankcard_type
+    Bankcard = BankcardModel
+except ImportError:
+    from oscar.apps.payment.forms import bankcard_type
+    from oscar.core.loading import get_class
+    Bankcard = get_class('payment.utils', 'Bankcard')
 
 
 def expiry_month_choices():
@@ -49,7 +54,7 @@ def start_year_choices(num_years=5):
     list is '--' to allow for not selecting a year.
     """
     years = [("", _("--"))]
-    for year in xrange(date.today().year-num_years, date.today().year+1):
+    for year in xrange(date.today().year - num_years, date.today().year + 1):
         years.append((year, year))
     return years
 
@@ -81,7 +86,7 @@ class BankcardForm(forms.Form):
     EWAY_CARDNUMBER = payment_forms.BankcardNumberField(
         max_length=20,
         required=False,
-        widget=forms.TextInput(attrs={'autocomplete':'off'}),
+        widget=forms.TextInput(attrs={'autocomplete': 'off'}),
         label=_("Card number")
     )
     EWAY_CARDCVN = forms.RegexField(
@@ -89,7 +94,8 @@ class BankcardForm(forms.Form):
         label=_("CVV Number"),
         regex=r'^\d{3,4}$',
         widget=forms.TextInput(attrs={'size': '5'}),
-        help_text=_("This is the 3 or 4 digit security number on the back of your bankcard")
+        help_text=_("This is the 3 or 4 digit security number on the back of "
+                    "your bankcard")
     )
 
     EWAY_CARDEXPIRYMONTH = forms.ChoiceField(
@@ -220,16 +226,15 @@ class BankcardForm(forms.Form):
         kwargs = {
             'name': self.cleaned_data['EWAY_CARDNAME'],
             'card_number': self.cleaned_data['EWAY_CARDNUMBER'],
-            'expiry_date': "%s/%s" %(
+            'expiry_date': "%s/%s" % (
                 self.cleaned_data['EWAY_CARDEXPIRYMONTH'],
                 self.cleaned_data['EWAY_CARDEXPIRYYEAR'],
             ),
             'cvv': self.cleaned_data['EWAY_CARDCVN'],
         }
         if (self.cleaned_data['EWAY_CARDSTARTMONTH']
-            and self.cleaned_data['EWAY_CARDSTARTMONTH']):
+           and self.cleaned_data['EWAY_CARDSTARTMONTH']):
             kwargs['start_date'] = "%s/%s" % (
                 self.cleaned_data['EWAY_CARDSTARTMONTH'],
-                self.cleaned_data['EWAY_CARDSTARTMONTH'],
-            )
+                self.cleaned_data['EWAY_CARDSTARTMONTH'])
         return Bankcard(**kwargs)

@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals, absolute_import
+from decimal import Decimal as D
+
 from httpretty import HTTPretty
 from httpretty import httprettified
 
@@ -7,8 +11,17 @@ from django.core.urlresolvers import reverse
 from oscar.core.loading import get_class
 from oscar.apps.basket.models import Basket
 from oscar.apps.address.models import Country
-from oscar_testsupport.testcases import WebTestCase
-from oscar_testsupport.factories import create_product
+
+try:
+    from oscar.test.testcases import WebTestCase
+except ImportError:
+    from oscar_testsupport.testcases import WebTestCase
+
+try:
+    from oscar.test.factories import create_product
+except ImportError:
+    from oscar_testsupport.factories import create_product
+
 
 Order = get_model('order', 'Order')
 OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
@@ -41,10 +54,13 @@ class TestARegisteredUser(WebTestCase):
         self.user.save()
 
     def go_to_payment_detail_page(self):
-        product = create_product()
+        product = create_product(price=D('14.99'), num_in_stock=100)
 
         page = self.get(
             reverse('catalogue:detail', args=(product.slug, product.id)))
+
+        self.assertIn(product.title, page)
+        self.assertIn('Add to basket', page)
 
         page = page.forms[2].submit()
         self.assertEquals(Basket.objects.count(), 1)
@@ -59,10 +75,14 @@ class TestARegisteredUser(WebTestCase):
         shipping_form['line1'] = "31 Spooner St"
         shipping_form['line4'] = "Quahog"
         shipping_form['state'] = "Victoria"
-        shipping_form['country'] = 'AU'
         shipping_form['postcode'] = "3070"
-        shipping_form['phone_number'] = "+61 (3) 121 121"
+        shipping_form['phone_number'] = "+61 (0)3 1121 1121"
         shipping_form['notes'] = "Some additional notes"
+
+        # the country field will be hidden in Oscar 0.6+
+        if 'country' in shipping_form.fields:
+            shipping_form['country'] = "AU"
+
         page = shipping_form.submit().follow().follow()
 
         self.assertRedirects(page, reverse('checkout:payment-details'))
