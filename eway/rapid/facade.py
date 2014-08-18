@@ -1,19 +1,16 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals, absolute_import
 from django.conf import settings
 
 from oscar.core.loading import get_classes
 
 from eway.rapid import gateway
+from eway import PURCHASE  # noqa
 
-PURCHASE = 'Purchase'
 
-
-(RedirectRequired,
- UnableToTakePayment,
- PaymentError) = get_classes('payment.exceptions', [
-     'RedirectRequired',
-     'UnableToTakePayment',
-     'PaymentError'
- ])
+(RedirectRequired, UnableToTakePayment, PaymentError) = get_classes(
+    'payment.exceptions',
+    ['RedirectRequired', 'UnableToTakePayment', 'PaymentError'])
 
 
 def get_client_ip(request):
@@ -30,19 +27,15 @@ class Facade(object):
     def __init__(self):
         self.gateway = gateway.Gateway(
             getattr(settings, 'EWAY_API_KEY', gateway.EWAY_API_KEY),
-            getattr(settings, 'EWAY_PASSWORD', gateway.EWAY_PASSWORD),
-        )
+            getattr(settings, 'EWAY_PASSWORD', gateway.EWAY_PASSWORD))
+
         self.currency = getattr(
-            settings,
-            'EWAY_CURRENCY',
-            gateway.EWAY_CURRENCY
-        )
+            settings, 'EWAY_CURRENCY', gateway.EWAY_CURRENCY)
 
     def token_payment(self, order_number, total_incl_tax, redirect_url,
-                            billing_address, token_customer_id=None,
-                            shipping_address=None, customer_ip=None,
-                            basket=None, options=None, **kwargs):
-
+                      billing_address, token_customer_id=None,
+                      shipping_address=None, customer_ip=None,
+                      basket=None, options=None, **kwargs):
         #TODO extract items from basket
 
         response = self.gateway.token_payment(
@@ -61,8 +54,7 @@ class Facade(object):
             # and provide it to the token_payment method
             items=None,
             options=options,
-            **kwargs
-        )
+            **kwargs)
         return response
 
     def get_access_code_result(self, access_code):

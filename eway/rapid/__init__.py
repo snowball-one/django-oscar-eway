@@ -1,5 +1,10 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+TRANSACTION_APPROVED = '00'
+
 TRANSACTION_RESPONSE_CODES = {
-    '00': 'Transaction Approved',
+    TRANSACTION_APPROVED: 'Transaction Approved',
     '01': 'Refer to Issuer',
     '02': 'Refer to Issuer, special',
     '03': 'No Merchant',

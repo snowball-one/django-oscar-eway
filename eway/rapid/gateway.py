@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals, absolute_import
 import json
+import logging
 import requests
 
 from decimal import Decimal as D
@@ -10,8 +13,10 @@ from django.core.exceptions import ImproperlyConfigured
 
 from eway.rapid import RESPONSE_CODES
 
+logger = logging.getLogger('eway')
+
 Transaction = get_model('eway', 'Transaction')
-ResponseCode = get_model('eway', 'ResponseCode')
+RequestLog = get_model('eway', 'RequestLog')
 
 
 EWAY_PROCESS_PAYMENT = 'ProcessPayment'
@@ -67,6 +72,8 @@ class RapidResponse(object):
 
         self.errors = errors
 
+        # Try to get properly indented JSON, if that fails we fall back to
+        # the raw data.
         try:
             self.json_raw = json.dumps(json_raw, indent=4)
         except ValueError:
@@ -80,8 +87,7 @@ class RapidResponse(object):
             payment=Payment.from_json(response['Payment']),
             customer=Customer.from_json(response['Customer']),
             errors=cls.extract_errors(response['Errors']),
-            json_raw=response,
-        )
+            json_raw=response)
 
     @classmethod
     def extract_errors(cls, error_codes):
@@ -542,14 +548,13 @@ class Gateway(object):
         if not self.api_key:
             raise ImproperlyConfigured(
                 "API key for eWay required but can't find EWAY_API_KEY "
-                "in setting. Please check and try again."
-            )
+                "in setting. Please check and try again.")
+
         self.password = password
         if not self.password:
             raise ImproperlyConfigured(
                 "API key for eWay required but can't find EWAY_PASSWORD "
-                "in setting. Please check and try again."
-            )
+                "in setting. Please check and try again.")
 
         if settings.EWAY_USE_SANDBOX:
             self.base_url = self.SANDBOX_URL
@@ -593,60 +598,97 @@ class Gateway(object):
 
     def access_codes(self, request):
         url = "%s/AccessCodes" % self.base_url
-        response = self._post(url, data=request.serialise())
+        request_json = request.serialise()
 
+        logger.info("requesting new access code: {0}".format(url))
+
+        transaction = Transaction.objects.create(access_code='')
+        request_log = RequestLog.objects.create(
+            transaction=transaction, request=request_json)
+
+        response = self._post(url, data=request_json)
         response = RapidResponse.from_json(response.json())
-        error_codes = ','.join([e.code for e in response.errors])
-        txn = Transaction.objects.create(
-            method=unicode(request.method),
-            request_url=url,
-            amount=request.payment.total_amount,
-            order_number=request.payment.invoice_reference,
-            request_json=json.dumps(request.json(), indent=4),
-            response_json=response.json_raw,
-            response_message=error_codes,
-        )
-        txn.add_response_codes(response.errors or [])
+
+        transaction.access_code = response.access_code
+        transaction.amount = request.payment.total_amount
+
+        transaction.order_number = request.payment.invoice_reference
+        transaction.save()
+
+        request_log.method = unicode(request.method)
+        request_log.url = url
+        request_log.request = json.dumps(request.json(), indent=4)
+        request_log.response = response.json_raw
+
+        errors = {}
+        for error in response.errors:
+            errors[error.code] = error.message
+
+        request_log.errors = json.dumps(errors)
+        request_log.save()
+
         return response
 
     def get_access_code_result(self, access_code):
         request_url = "%s/AccessCode/%s" % (self.base_url, access_code)
-        response = self._get(request_url)
 
+        logger.info(
+            'requesting results for access code: {0}'.format(access_code))
+
+        transaction, __ = Transaction.objects.get_or_create(
+            access_code=access_code)
+
+        request_log = RequestLog.objects.create(
+            transaction=transaction, request='{}')
+
+        response = self._get(request_url)
         response = RapidAccessCodeResult.from_json(response.json())
-        error_codes = ','.join([e.code for e in response.errors])
-        txn = Transaction.objects.create(
-            request_url=request_url,
-            method="GetAccessCodeResult",
-            transaction_id=response.transaction_id,
-            amount=response.total_amount,
-            token_customer_id=response.token_customer_id,
-            order_number=response.invoice_reference,
-            response_code=response.response_code.code,
-            response_message=response.response_code.message or error_codes,
-            response_json=response.json_raw,
-        )
-        txn.add_response_codes(response.errors or [])
+
+        logger.info("results for access code '{0}': {1}".format(
+            access_code, response.json_raw))
+
+        transaction.order_number = response.invoice_reference
+        transaction.amount = response.total_amount
+
+        if response.transaction_id:
+            transaction.transaction_id = response.transaction_id
+
+        if response.token_customer_id:
+            transaction.token_customer_id = response.token_customer_id
+
+        transaction.status = transaction.COMPLETED
+        transaction.save()
+
+        request_log.method = "GetAccessCodeResult"
+        request_log.url = request_url
+        request_log.response = response.json_raw
+
+        errors = {}
+        for error in response.errors:
+            errors[error.code] = error.message
+
+        request_log.errors = json.dumps(errors)
+        request_log.response_code = response.response_code.code
+        request_log.response_message = response.response_code.message
+
+        request_log.save()
+
         return response
 
     def _get(self, url):
         try:
-            response = requests.get(
-                url,
-                auth=(self.api_key, self.password),
-            )
+            response = requests.get(url, auth=(self.api_key, self.password))
         except Exception as exc:
+            logger.error("could not connect to eWay server: {0}".format(url))
             raise RapidError(
-                'problem connecting to eWay server: %s' % (exc.message)
-            )
+                'problem connecting to eWay server: %s' % (exc.message))
 
         if response.status_code != 200:
+            logger.error("eWay responded with error {0}: {1}".format(
+                response.status_code, response.reason))
             raise RapidError(
                 'received error response: [%s] %s' % (
-                    response.status_code,
-                    response.reason
-                )
-            )
+                    response.status_code, response.reason))
         return response
 
     def _post(self, url, data):
@@ -654,20 +696,19 @@ class Gateway(object):
         try:
             response = requests.post(
                 "%s/AccessCodes" % self.base_url,
-                auth=(self.api_key, self.password),
-                data=data,
-                headers=headers,
-            )
+                auth=(self.api_key, self.password), data=data, headers=headers)
         except Exception as exc:
+            logger.error(
+                "could not connect to eWay server: {0}".format(url),
+                extra={"data": data, 'headers': headers})
             raise RapidError(
-                'problem connecting to eWay server: %s' % (exc.message)
-            )
+                'problem connecting to eWay server: %s' % (exc.message))
 
         if response.status_code != 200:
+            logger.error("eWay responded with error {0}: {1}".format(
+                response.status_code, response.reason),
+                extra={"data": data, 'headers': headers})
             raise RapidError(
                 'received error response: [%s] %s' % (
-                    response.status_code,
-                    response.reason
-                )
-            )
+                    response.status_code, response.reason))
         return response

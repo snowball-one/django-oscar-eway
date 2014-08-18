@@ -1,89 +1,154 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals, absolute_import
+import logging
+
 from django.db import models
+from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
+from . import rapid
 
-class Transaction(models.Model):
-    """
-    A transaction log entry for communication with the eWay API server.
-    This logs the request URL used in the transaction, the raw JSON
-    request and response as well as additional data depending on the
-    type of the transaction method
-    """
-    # Note we don't use a foreign key as the order hasn't been created
-    # by the time the transaction takes place
-    order_number = models.CharField(max_length=128, db_index=True, null=True)
-    # the token ID that is used when an existing customer is trying
-    # use a previously used card. This can be empty for anonymous
-    # user's or if this is the first transaction
-    token_customer_id = models.CharField(
-        max_length=16,
-        db_index=True,
-        null=True
-    )
+logger = logging.getLogger('eway')
 
-    # Transaction type
-    request_url = models.CharField(max_length=800, null=True)
-    method = models.CharField(max_length=100, null=True)
-    transaction_id = models.CharField(max_length=100, null=True)
 
-    amount = models.DecimalField(
-        decimal_places=2,
-        max_digits=12,
-        blank=True,
-        null=True
-    )
-
-    response_code = models.CharField(max_length=2, null=True)
-    response_message = models.CharField(max_length=255, null=True)
-
-    # For debugging purposes
-    request_json = models.TextField()
-    response_json = models.TextField(null=True)
-
-    date_created = models.DateTimeField(auto_now_add=True)
-
-    def add_response_codes(self, errors):
-        if errors:
-            self.response_message = u'Successful'
-            self.save()
-
-        for error in errors:
-            erc, __ = ResponseCode.objects.get_or_create(
-                code=error.code,
-                message=error.message,
-            )
-            erc.transactions.add(self)
+class ModificationMixin(models.Model):
+    date_created = models.DateTimeField(_("date created"))
+    date_modified = models.DateTimeField(_("date modified"))
 
     def save(self, *args, **kwargs):
-        if self.id and not self.response_message:
-            if  not self.response_messages.count():
-                self.response_message = u'Successful'
-        super(Transaction, self).save(*args, **kwargs)
+        now = timezone.now()
+        if not self.date_created:
+            self.date_created = now
+        self.date_modified = now
+        return super(ModificationMixin, self).save(*args, **kwargs)
+
+    class Meta:
+        abstract = True
+
+
+class Transaction(ModificationMixin):
+    """
+    A representation of a EWay transaction for a specific Oscar order.
+    """
+    IN_PROGRESS = 'in progress'
+    COMPLETED = 'completed'
+    SUSPICIOUS = 'suspicious'
+
+    STATUSES = (
+        (IN_PROGRESS, _("in progress")),
+        (COMPLETED, _("completed")),
+        (SUSPICIOUS, _("suspicious"))
+    )
+
+    access_code = models.CharField(
+        _("access code"), max_length=255, blank=True)
+    token_customer_id = models.CharField(
+        _("token customer ID"), max_length=16, blank=True, default='')
+    transaction_id = models.CharField(
+        _("transaction ID"), max_length=100, blank=True, default='')
+
+    amount = models.DecimalField(
+        _("amount"), decimal_places=2, max_digits=12, blank=True, null=True)
+
+    basket = models.ForeignKey(
+        'basket.Basket', verbose_name=_("basket"),
+        related_name='eway_transactions', null=True, on_delete=models.SET_NULL)
+
+    # we use this to store the order number in case an order is deleted. This
+    # is automatically populated when saving the model
+    order_number = models.CharField(
+        _("order number"), max_length=255, blank=True, default='')
+
+    status = models.CharField(
+        _("status"), max_length=255, default=IN_PROGRESS, choices=STATUSES)
+
+    @cached_property
+    def is_completed(self):
+        return self.status == self.COMPLETED
+
+    @cached_property
+    def last_request_log(self):
+        logs = self.request_logs.all()[:1]
+        if len(logs):
+            return logs[0]
+        return None
+
+    @cached_property
+    def is_approved(self):
+        log = self.last_request_log
+        if not log:
+            return False
+        return log.response_code == rapid.TRANSACTION_APPROVED
+
+    @cached_property
+    def is_rejected(self):
+        return not self.is_approved
+
+    @cached_property
+    def response_code(self):
+        try:
+            return self.last_request_log.response_code
+        except AttributeError:
+            return ''
+
+    @cached_property
+    def response_message(self):
+        try:
+            return self.last_request_log.response_message
+        except AttributeError:
+            return ''
+
+    @cached_property
+    def order(self):
+        if not self.order_number:
+            return
+
+        Order = models.get_model('order', 'Order')
+        try:
+            return Order.objects.get(number=self.order_number)
+        except Order.DoesNotExist:
+            logger.info(
+                "could not find order with number '{0}', not setting order "
+                "on transaction: {1}".format(self.order_number, unicode(self)))
+            return None
+
+    def __unicode__(self):
+        txn_id = self.transaction_id or self.access_code
+        return "Transaction {0}".format(txn_id[:30])
 
     class Meta:
         ordering = ('-date_created',)
+        verbose_name = _("transaction")
+        verbose_name_plural = _("transactions")
+
+
+class RequestLog(ModificationMixin):
+    """
+    Log entry for requests submitted to the EWay API.
+    """
+    transaction = models.ForeignKey(
+        'eway.Transaction', verbose_name=_("transaction"),
+        related_name="request_logs")
+
+    url = models.TextField(_("request URL"), default='')
+    method = models.CharField(_("request_method"), max_length=255, blank=True)
+
+    request = models.TextField(_("request message"), blank=True)
+    response = models.TextField(_("response message"), blank=True, default='')
+
+    response_code = models.CharField(
+        _("response code"), max_length=2, blank=True, default='')
+    response_message = models.CharField(
+        _("response message"), max_length=255, blank=True, default='')
+
+    errors = models.TextField(_("errors"), blank=True, default='')
 
     def __unicode__(self):
-        return u'%s txn for order %s - ref: %s, message: %s' % (
-            self.method,
-            self.order_number,
-            self.transaction_id,
-            self.response_message,
-        )
+        return "Request '{0}' for TXN {1}".format(
+            self.method, self.transaction.transaction_id)
 
-
-class ResponseCode(models.Model):
-    """
-    Error and response codes as defined in the eWay Rapid 3.0 specs
-    linked to multiple transactions so that data does not have to
-    be replicated in each request.
-    """
-    code = models.CharField(_("Code"), unique=True, max_length=10)
-    message = models.CharField(_("Message"), max_length=255)
-    transactions = models.ManyToManyField(
-        Transaction,
-        related_name="response_messages"
-    )
-
-    def __unicode__(self):
-        return "[%s] %s" % (self.code, self.message)
+    class Meta:
+        ordering = ('-date_created',)
+        verbose_name = _("request log")
+        verbose_name_plural = _("request logs")

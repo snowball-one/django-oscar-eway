@@ -1,22 +1,19 @@
 #!/usr/bin/env python
 import os
 import sys
-import logging
 
 sys.path.insert(0, 'sandbox')
-
 from django.conf import settings
 
 from oscar import get_core_apps
 from oscar.defaults import OSCAR_SETTINGS
 from oscar import OSCAR_MAIN_TEMPLATE_DIR
 
-location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
+location = lambda x: os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), x)
 
-EWAY_RUN_EXTERNAL_TESTS = int(os.environ.get('EWAY_RUN_EXTERNAL_TESTS', 0))
 
-
-def configure():
+def pytest_configure():
     if not settings.configured:
         OSCAR_SETTINGS['OSCAR_ALLOW_ANON_CHECKOUT'] = True
 
@@ -100,28 +97,6 @@ def configure():
             EWAY_API_KEY=os.environ.get('EWAY_API_KEY'),
             EWAY_PASSWORD=os.environ.get('EWAY_PASSWORD'),
             EWAY_USE_SANDBOX=True,
-            EWAY_RUN_EXTERNAL_TESTS=(EWAY_RUN_EXTERNAL_TESTS > 0),
             EWAY_CURRENCY="AUD",
-            NOSE_ARGS=[
-                '-s',
-                '--with-specplugin',
-            ],
             **OSCAR_SETTINGS
         )
-
-logging.disable(logging.CRITICAL)
-
-
-def run_tests(*test_args):
-    from django_nose import NoseTestSuiteRunner
-    test_runner = NoseTestSuiteRunner(verbosity=1)
-    if not test_args:
-        test_args = ['tests']
-    num_failures = test_runner.run_tests(test_args)
-    if num_failures:
-        sys.exit(num_failures)
-
-
-if __name__ == '__main__':
-    configure()
-    run_tests(*sys.argv[1:])

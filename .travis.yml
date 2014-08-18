@@ -1,18 +1,22 @@
 language: python
 python:
-- '2.7'
+  - '2.7'
 env:
-  matrix:
-  - DJANGO_VERSION=">=1.4,<1.5"
-  - DJANGO_VERSION=">=1.5,<1.6"
   global:
-  - secure: XSiuk44VhrgV94C7RW2X1A9XNVcwv78yZhjInH0dn4Otm2a5/1IepYZZvDHud2JMSF9V3j5G5ypsTNS9JFgpsNdgTJcMLKFQcJ3iSv7vwlUE66e6pGNdX9FA/RWfVlTaIxpRROCTEktGaP1ZpQ4DkJTD0JVxn0AeTntIzmLilAg=
-  - secure: W+I/eWocDKoup1LVOQ5pthfaYcCyMyVJdof7L1K2/u0ulT+VwlkV8Ytuze9rRdEqH3wFTnv21pe6nEyBcDUTyzlhA8PjDAcRVr1gyXlF1lW6iE6wA/JKYLs1Xhu7Ob8UjMvutBroqauA7rbr5BJG//9qK+9wliX2QX8RH2g6syU=
+    # Eway sandbox keys to run system tests
+    - secure: XSiuk44VhrgV94C7RW2X1A9XNVcwv78yZhjInH0dn4Otm2a5/1IepYZZvDHud2JMSF9V3j5G5ypsTNS9JFgpsNdgTJcMLKFQcJ3iSv7vwlUE66e6pGNdX9FA/RWfVlTaIxpRROCTEktGaP1ZpQ4DkJTD0JVxn0AeTntIzmLilAg=
+    - secure: W+I/eWocDKoup1LVOQ5pthfaYcCyMyVJdof7L1K2/u0ulT+VwlkV8Ytuze9rRdEqH3wFTnv21pe6nEyBcDUTyzlhA8PjDAcRVr1gyXlF1lW6iE6wA/JKYLs1Xhu7Ob8UjMvutBroqauA7rbr5BJG//9qK+9wliX2QX8RH2g6syU=
+
+  matrix:
+    - TOXENV=py2.7-dj1.4-oscar0.5
+    - TOXENV=py2.7-dj1.5-oscar0.5
+    - TOXENV=py2.7-dj1.6-oscar0.5
+before_install:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+
 install:
-- pip install Django$DJANGO_VERSION
-- pip install . --use-mirrors
-- pip install -r requirements.txt --use-mirrors
+  - pip install tox
+
 script:
-- coverage run ./runtests.py --with-xunit
-after_success:
-- coveralls
+  - tox

@@ -12,6 +12,7 @@
 .ropeproject
 
 .tox/
+.cache/
 
 environment.sh
 
@@ -19,3 +20,4 @@ dist/
 cover/
 public/
 docs/build/
+sandbox/media/

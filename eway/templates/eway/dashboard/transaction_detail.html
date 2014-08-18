@@ -1,0 +1,116 @@
+{% extends "dashboard/layout.html" %}
+{% load i18n %}
+{% load url from future %}
+{% load currency_filters %}
+
+{% block title %}
+{% blocktrans with transaction_id=transaction.transaction_id %}eWay Transaction #{{ transaction_id }}{% endblocktrans %}
+| {{ block.super }}
+{% endblock %}
+
+
+{% block breadcrumbs %}
+<ul class="breadcrumb">	
+    <li>	
+        <a href="{% url "dashboard:index" %}">{% trans "Dashboard" %}</a>	
+        <span class="divider">/</span>	
+    </li>	
+    <li>	
+        <a href="{% url "eway-dashboard:transaction-list" %}">{% trans "eWay Transactions" %}</a>	
+        <span class="divider">/</span>	
+    </li>	
+    <li class="active">{% blocktrans with transaction_id=transaction.transaction_id %}eWay Transaction #{{ transaction_id }}{% endblocktrans %}</li>	
+</ul>
+{% endblock %}
+
+{% block header %}
+<div class="page-header">
+    <h1>
+        {% blocktrans with transaction_id=transaction.transaction_id %}eWay Transaction #{{ transaction_id }}{% endblocktrans %}
+    </h1>
+</div>
+{% endblock header %}
+
+{% block dashboard_content %}
+
+{% with order=transaction.order %}
+<table class="table table-bordered table-hover">
+    <caption><i class="icon-group icon-large"></i>{% trans "Customer Information" %}</caption>
+    {% if order %}
+        {% if order.guest_email %}
+            <tr>
+                <th>{% trans "Name" %}</th>
+                <td>
+                    {% trans "Customer checked out as a guest." %}
+                </td>
+            </tr>
+            <tr>
+                <th>{% trans "Email address" %}</th>
+                <td>{{ order.email }}</td>
+            </tr>
+        {% elif order.user %}
+            <tr>
+                <th>{% trans "Name" %}</th>
+                <th>{% trans "Email address" %}</th>
+            </tr>
+            <tr>
+                <td>{{ order.user.get_full_name|default:"-" }}</td>
+                <td>{{ order.user.email|default:"-" }}</td>
+            </tr>
+        {% else %}
+            <tr><td>{% trans "Customer has deleted their account." %}</td></tr>
+        {% endif %}
+    {% else %}
+        <tr><td>{% trans "Customer details not available for this transaction." %}</td></tr>
+    {% endif %}
+</table>
+{% endwith %}
+
+
+<table class="table-bordered table">
+
+    <caption>
+        <h3>
+            <i class="icon-money icon-large"></i>
+            {% trans "Transaction details" %}
+        </h3>
+    </caption>
+
+    <tr>
+        <th>{% trans "Transaction ID" %}</th>
+        <td>{{ transaction.transaction_id }}</td>
+    </tr>
+
+    <tr>
+        <th>{% trans "Access Code" %}</th>
+        <td>{{ transaction.access_code|default:"-" }}</td>
+    </tr>
+
+    <tr>
+        <th>{% trans "Order number" %}</th>
+        <td>{{ transaction.order_number }}</td>
+    </tr>
+
+    <tr>
+        <th>{% trans "Total amount" %}</th>
+        <td>{{ transaction.amount|currency }}</td>
+    </tr>
+
+    <tr>
+        <th>{% trans "Status" %}</th>
+        <td>{{ transaction.status }}</td>
+    </tr>
+
+    <tr>
+        <th>{% trans "Transaction Result" %}</th>
+        <td>
+            {% if transaction.last_request_log.response_code %}
+                {{ transaction.last_request_log.response_message }}
+                ({{ transaction.last_request_log.response_code }})
+            {% else %}
+                {% trans "not available" %}
+            {% endif %}
+        </td>
+    </tr>
+</table>
+{% endblock %}

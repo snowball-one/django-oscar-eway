@@ -1,4 +1,9 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 import os
+
+from django.utils.translation import ugettext_lazy as _
+
 
 # Django settings for oscar project.
 PROJECT_DIR = os.path.dirname(__file__)
@@ -221,6 +226,11 @@ DEBUG_TOOLBAR_CONFIG = {
 # Oscar settings
 from oscar.defaults import *
 OSCAR_ALLOW_ANON_CHECKOUT = True
+OSCAR_DASHBOARD_NAVIGATION.append({
+    'label': _('eWay'),
+    'icon': 'icon-money',
+    'url_name': 'eway-dashboard:transaction-list'})
+
 
 # Haystack settings
 HAYSTACK_CONNECTIONS = {
