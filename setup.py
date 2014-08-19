@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 
+from eway import get_version
+
 
 setup(
     name='django-oscar-eway',
-    version='versiontools:eway:',
+    version=get_version(),
     url='https://github.com/tangentlabs/django-oscar-eway',
     author="Sebastian Vetter",
     author_email="sebastian.vetter@tangentsnowball.com.au",
@@ -20,9 +22,6 @@ setup(
     install_requires=[
         'django-oscar>=0.4',
         'requests>=1.0',
-    ],
-    setup_requires=[
-        'versiontools>=1.9.1',
     ],
     include_package_data=True,
     # See http://pypi.python.org/pypi?%3Aaction=list_classifiers
