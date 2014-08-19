@@ -20,7 +20,7 @@ Installation
 
 You can install ``django-oscar-eway`` directly from github by running::
 
-    $ pip install git+https://github.com/snowball-one/django-oscar-eway.git#egg=django-oscar-eway-dev
+    $ pip install django-oscar-eway
 
 After you have successfully installed it, you should add the app to your
 ``INSTALLED_APPS``::
