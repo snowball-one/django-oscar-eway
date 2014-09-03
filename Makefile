@@ -3,6 +3,10 @@
 USER=admin
 EMAIL=admin@tangentsnowball.com.au
 
+postgres-db:
+	- psql -U postgres -h localhost -c 'drop database devdb;'
+	psql -U postgres -h localhost -c 'create database devdb;'
+
 sandbox:
 	python sandbox/manage.py syncdb --noinput
 	python sandbox/manage.py migrate

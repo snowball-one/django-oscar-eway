@@ -15,10 +15,17 @@ env:
     - TOXENV=py27-django14-oscar06-envtest
     - TOXENV=py27-django15-oscar06-envtest
     - TOXENV=py27-django16-oscar06-envtest
+    
+    - TOXENV=test-postgres-migrations
+    - TOXENV=test-mysql-migrations
 
 before_install:
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start"
+
+before_script:
+  - mysql -e 'create database devdb;'
+  - psql -c 'create database devdb;' -U postgres
 
 install:
     # Tox 1.8 installation required for new envlist generation feature

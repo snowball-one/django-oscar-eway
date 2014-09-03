@@ -1,0 +1,14 @@
+mysqldb:
+    image: centurylink/mysql
+    ports:
+        - "3306:3306"
+    environment:
+        MYSQL_ROOT_PASSWORD: ''
+        MYSQL_DATABASE: devdb
+        MYSQL_USER: travis
+        MYSQL_PASSWORD: ''
+
+postgresdb:
+    image: stackbrew/postgres 
+    ports:
+      - "5432:5432"

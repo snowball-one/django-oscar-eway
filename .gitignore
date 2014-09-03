@@ -18,6 +18,7 @@ environment.sh
 
 dist/
 cover/
+build/
 public/
 htmlcov/
 docs/build/
