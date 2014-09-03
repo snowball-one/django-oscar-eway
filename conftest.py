@@ -59,7 +59,6 @@ def pytest_configure():
                 'django.middleware.csrf.CsrfViewMiddleware',
                 'django.contrib.auth.middleware.AuthenticationMiddleware',
                 'django.contrib.messages.middleware.MessageMiddleware',
-                'debug_toolbar.middleware.DebugToolbarMiddleware',
                 'oscar.apps.basket.middleware.BasketMiddleware',
             ),
             ROOT_URLCONF='sandbox.urls',
