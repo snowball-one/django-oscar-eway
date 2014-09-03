@@ -12,8 +12,17 @@ class Migration(SchemaMigration):
         db.rename_table('eway_ewayresponsecode', 'eway_responsecode')
 
         db.rename_table('eway_ewayresponsecode_transactions', 'eway_responsecode_transactions')
+
+        if db.backend_name == 'mysql':
+            db.drop_foreign_key('eway_responsecode_transactions', 'ewayresponsecode_id')
+            db.drop_foreign_key('eway_responsecode_transactions', 'ewaytransaction_id')
+
         db.rename_column('eway_responsecode_transactions', 'ewayresponsecode_id', 'responsecode_id')
         db.rename_column('eway_responsecode_transactions', 'ewaytransaction_id', 'transaction_id')
+
+        if db.backend_name == 'mysql':
+            db.alter_column('eway_responsecode_transactions', 'responsecode_id', models.ForeignKey(null=False, to=orm['eway.responsecode']))
+            db.alter_column('eway_responsecode_transactions', 'transaction_id', models.ForeignKey(null=False, to=orm['eway.transaction']))
 
     def backwards(self, orm):
         db.rename_table('eway_transaction', 'eway_ewaytransaction')
