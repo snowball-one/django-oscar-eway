@@ -14,3 +14,8 @@ sandbox:
 	python sandbox/manage.py loaddata countries.json
 	echo "Creating superuser '$(USER)' with email '$(EMAIL)'"
 	python sandbox/manage.py createsuperuser --username=$(USER) --email=$(EMAIL)
+
+pypi-release:
+	rm -rf dist/*
+	python setup.py sdist bdist_wheel
+	twine upload dist/* -r pypi-snowball
