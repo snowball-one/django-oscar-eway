@@ -10,10 +10,10 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Instead of removing/deleting the old tables we just move them so that
         # we'll still have access to them through the database itself.
-        db.rename_table('eway_transaction', 'eway_transaction_DEPRECATED')
-        db.rename_table('eway_responsecode', 'eway_responsecode_DEPRECATED')
+        db.rename_table('eway_transaction', 'eway_transaction_deprecated')
+        db.rename_table('eway_responsecode', 'eway_responsecode_deprecated')
         db.rename_table('eway_responsecode_transactions',
-                        'eway_responsecode_transactions_DEPRECATED')
+                        'eway_responsecode_transactions_deprecated')
 
         # Rename the new transaction table
         db.rename_table('eway_ewaytransaction', 'eway_transaction')
@@ -22,9 +22,9 @@ class Migration(SchemaMigration):
         # Rename the new transaction table
         db.rename_table('eway_transaction', 'eway_ewaytransaction')
 
-        db.rename_table('eway_transaction_DEPRECATED', 'eway_transaction')
-        db.rename_table('eway_responsecode_DEPRECATED', 'eway_responsecode')
-        db.rename_table('eway_responsecode_transactions_DEPRECATED',
+        db.rename_table('eway_transaction_deprecated', 'eway_transaction')
+        db.rename_table('eway_responsecode_deprecated', 'eway_responsecode')
+        db.rename_table('eway_responsecode_transactions_deprecated',
                         'eway_responsecode_transactions')
 
     models = {
