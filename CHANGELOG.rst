@@ -6,6 +6,9 @@ Changelog
 -----
 
 * Add support for Oscar v0.7 and v0.8
+* Add support for Django 1.7 when using Oscar 0.8. Earlier versions of Oscar
+  are not supported because Django 1.7 support is only available starting with
+  Oscar 0.8.
 
 
 0.1.1

@@ -1,81 +1,63 @@
 # -*- coding: utf-8 -*-
-import datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+from __future__ import unicode_literals
+
+from django.db import models, migrations
+import django.db.models.deletion
 
 
-class Migration(SchemaMigration):
+class Migration(migrations.Migration):
 
-    def forwards(self, orm):
-        # Adding model 'EwayTransaction'
-        db.create_table('eway_ewaytransaction', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('order_number', self.gf('django.db.models.fields.CharField')(max_length=128, null=True, db_index=True)),
-            ('token_customer_id', self.gf('django.db.models.fields.CharField')(max_length=16, null=True, db_index=True)),
-            ('txn_url', self.gf('django.db.models.fields.CharField')(max_length=800, null=True)),
-            ('txn_method', self.gf('django.db.models.fields.CharField')(max_length=12, null=True)),
-            ('txn_ref', self.gf('django.db.models.fields.CharField')(max_length=16, null=True)),
-            ('amount', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=12, decimal_places=2, blank=True)),
-            ('response_code', self.gf('django.db.models.fields.CharField')(max_length=2, null=True)),
-            ('response_message', self.gf('django.db.models.fields.CharField')(max_length=255, null=True)),
-            ('request_json', self.gf('django.db.models.fields.TextField')()),
-            ('response_json', self.gf('django.db.models.fields.TextField')(null=True)),
-            ('date_created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-        ))
-        db.send_create_signal('eway', ['EwayTransaction'])
+    dependencies = [
+        ('basket', '0003_basket_vouchers'),
+    ]
 
-        # Adding model 'EwayResponseCode'
-        db.create_table('eway_ewayresponsecode', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('code', self.gf('django.db.models.fields.CharField')(unique=True, max_length=10)),
-            ('message', self.gf('django.db.models.fields.CharField')(max_length=255)),
-        ))
-        db.send_create_signal('eway', ['EwayResponseCode'])
-
-        # Adding M2M table for field transactions on 'EwayResponseCode'
-        db.create_table('eway_ewayresponsecode_transactions', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('ewayresponsecode', models.ForeignKey(orm['eway.ewayresponsecode'], null=False)),
-            ('ewaytransaction', models.ForeignKey(orm['eway.ewaytransaction'], null=False))
-        ))
-        db.create_unique('eway_ewayresponsecode_transactions', ['ewayresponsecode_id', 'ewaytransaction_id'])
-
-
-    def backwards(self, orm):
-        # Deleting model 'EwayTransaction'
-        db.delete_table('eway_ewaytransaction')
-
-        # Deleting model 'EwayResponseCode'
-        db.delete_table('eway_ewayresponsecode')
-
-        # Removing M2M table for field transactions on 'EwayResponseCode'
-        db.delete_table('eway_ewayresponsecode_transactions')
-
-
-    models = {
-        'eway.ewayresponsecode': {
-            'Meta': {'object_name': 'EwayResponseCode'},
-            'code': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '10'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'message': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'transactions': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'response_messages'", 'symmetrical': 'False', 'to': "orm['eway.EwayTransaction']"})
-        },
-        'eway.ewaytransaction': {
-            'Meta': {'ordering': "('-date_created',)", 'object_name': 'EwayTransaction'},
-            'amount': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '12', 'decimal_places': '2', 'blank': 'True'}),
-            'date_created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'order_number': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'db_index': 'True'}),
-            'request_json': ('django.db.models.fields.TextField', [], {}),
-            'response_code': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True'}),
-            'response_json': ('django.db.models.fields.TextField', [], {'null': 'True'}),
-            'response_message': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True'}),
-            'token_customer_id': ('django.db.models.fields.CharField', [], {'max_length': '16', 'null': 'True', 'db_index': 'True'}),
-            'txn_method': ('django.db.models.fields.CharField', [], {'max_length': '12', 'null': 'True'}),
-            'txn_ref': ('django.db.models.fields.CharField', [], {'max_length': '16', 'null': 'True'}),
-            'txn_url': ('django.db.models.fields.CharField', [], {'max_length': '800', 'null': 'True'})
-        }
-    }
-
-    complete_apps = ['eway']
+    operations = [
+        migrations.CreateModel(
+            name='RequestLog',
+            fields=[
+                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
+                ('date_created', models.DateTimeField(verbose_name='date created')),
+                ('date_modified', models.DateTimeField(verbose_name='date modified')),
+                ('url', models.TextField(default='', verbose_name='request URL')),
+                ('method', models.CharField(max_length=255, verbose_name='request_method', blank=True)),
+                ('request', models.TextField(verbose_name='request message', blank=True)),
+                ('response', models.TextField(default='', verbose_name='response message', blank=True)),
+                ('response_code', models.CharField(default='', max_length=2, verbose_name='response code', blank=True)),
+                ('response_message', models.CharField(default='', max_length=255, verbose_name='response message', blank=True)),
+                ('errors', models.TextField(default='', verbose_name='errors', blank=True)),
+            ],
+            options={
+                'ordering': ('-date_created',),
+                'verbose_name': 'request log',
+                'verbose_name_plural': 'request logs',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
+            name='Transaction',
+            fields=[
+                ('id', models.AutoField(serialize=False, primary_key=True, auto_created=True, verbose_name='ID')),
+                ('date_created', models.DateTimeField(verbose_name='date created')),
+                ('date_modified', models.DateTimeField(verbose_name='date modified')),
+                ('access_code', models.CharField(max_length=255, verbose_name='access code', blank=True)),
+                ('token_customer_id', models.CharField(default='', max_length=16, verbose_name='token customer ID', blank=True)),
+                ('transaction_id', models.CharField(default='', max_length=100, verbose_name='transaction ID', blank=True)),
+                ('amount', models.DecimalField(null=True, max_digits=12, verbose_name='amount', blank=True, decimal_places=2)),
+                ('order_number', models.CharField(default='', max_length=255, verbose_name='order number', blank=True)),
+                ('status', models.CharField(default='in progress', max_length=255, verbose_name='status', choices=[('in progress', 'in progress'), ('completed', 'completed'), ('suspicious', 'suspicious')])),
+                ('basket', models.ForeignKey(to='basket.Basket', verbose_name='basket', on_delete=django.db.models.deletion.SET_NULL, related_name='eway_transactions', null=True)),
+            ],
+            options={
+                'ordering': ('-date_created',),
+                'verbose_name': 'transaction',
+                'verbose_name_plural': 'transactions',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.AddField(
+            model_name='requestlog',
+            name='transaction',
+            field=models.ForeignKey(to='eway.Transaction', verbose_name='transaction', related_name='request_logs'),
+            preserve_default=True,
+        ),
+    ]

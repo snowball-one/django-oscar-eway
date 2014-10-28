@@ -27,9 +27,12 @@ env:
     - TOXENV=py27-django14-oscar08-envtest
     - TOXENV=py27-django15-oscar08-envtest
     - TOXENV=py27-django16-oscar08-envtest
+    - TOXENV=py27-django17-oscar08-envtest
     
-    - TOXENV=test-postgres-migrations
-    - TOXENV=test-mysql-migrations
+    - TOXENV=test-postgres-south-migrations
+    - TOXENV=test-mysql-south-migrations
+    - TOXENV=test-postgres-django-migrations
+    - TOXENV=test-mysql-django-migrations
 
 before_install:
   - "export DISPLAY=:99.0"

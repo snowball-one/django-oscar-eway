@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import os
+import django
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -30,7 +31,7 @@ DATABASES = {
     }
 }
 
-print "Using database:", DATABASES['default']['NAME']
+SOUTH_MIGRATION_MODULES = {'eway': 'eway.south_migrations'}
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -197,13 +198,11 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     'django_extensions',
-    'debug_toolbar',
-    'compressor',
-    'sorl.thumbnail',
-    'haystack',
-    'south',
-    'compressor',
+    'debug_toolbar'
 ]
+
+if django.VERSION[:2] < (1, 7):
+    THIRD_PARTY_APPS += ['south']
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + ['eway']
 
