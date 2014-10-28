@@ -23,6 +23,10 @@ env:
     - TOXENV=py27-django14-oscar07-envtest
     - TOXENV=py27-django15-oscar07-envtest
     - TOXENV=py27-django16-oscar07-envtest
+
+    - TOXENV=py27-django14-oscar08-envtest
+    - TOXENV=py27-django15-oscar08-envtest
+    - TOXENV=py27-django16-oscar08-envtest
     
     - TOXENV=test-postgres-migrations
     - TOXENV=test-mysql-migrations
