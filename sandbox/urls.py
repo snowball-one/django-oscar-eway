@@ -13,7 +13,9 @@ from apps.app import shop
 admin.autodiscover()
 
 urlpatterns = [
+    url(r'^i18n/', include('django.conf.urls.i18n')),
     url(r'^admin/', include(admin.site.urls)),
+
     url(r'^checkout/eway/', include('eway.rapid.urls')),
     url(r'^dashboard/',
         include('eway.dashboard.urls', namespace='eway-dashboard')),

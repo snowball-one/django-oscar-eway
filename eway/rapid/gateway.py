@@ -502,11 +502,13 @@ class ShippingAddress(RapidBaseObject):
         self.first_name = shipping_address.first_name
         self.last_name = shipping_address.last_name
         self.street1 = shipping_address.line1
-        self.street2 = shipping_address.line2
         self.city = shipping_address.line4
         self.state = shipping_address.state
         self.postal_code = shipping_address.postcode
         self.country = shipping_address.country.iso_3166_1_a2.lower()
+
+        if shipping_address.line2:
+            self.street2 = shipping_address.line2
 
 
 class Item(RapidBaseObject):

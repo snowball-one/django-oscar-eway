@@ -12,12 +12,19 @@ from .facade import Facade
 from .. import compat
 from .. import PAYMENT_METHOD_EWAY
 
+
+if compat.USES_NEW_STRATEGY_PATTERN:
+    from eway.rapid.compat import OscarStrategyMixin as OscarPaymentMixin
+else:
+    from eway.rapid.compat import OscarPreStrategyMixin as OscarPaymentMixin
+
+
 OrderNumberGenerator = get_class('order.utils', 'OrderNumberGenerator')
 PaymentError = get_class('payment.exceptions', 'PaymentError')
 CheckoutSessionData = get_class('checkout.utils', 'CheckoutSessionData')
 
 
-class EwayPaymentDetailMixin(object):
+class EwayPaymentDetailMixin(OscarPaymentMixin):
     facade = Facade()
 
     def get_context_data(self, **kwargs):
@@ -31,7 +38,7 @@ class EwayPaymentDetailMixin(object):
         ctx['bankcard_form'] = kwargs.get('bankcard_form', bankcard_form)
         ctx['payment_method'] = self.checkout_session.payment_method()
 
-        if not 'form_action_url' in ctx:
+        if 'form_action_url' not in ctx:
             ctx['form_action_url'] = reverse('checkout:preview')
 
         return ctx
@@ -42,7 +49,13 @@ class EwayPaymentDetailMixin(object):
         validate the forms from the payment details page. If the forms are
         valid then the method can call submit().
         """
-        error_response = self.get_error_response()
+        # get_error_response has been removed in Oscar 0.7 due to changes in
+        # validating pre-conditions. This prevents failure in Oscar 0.7+
+        try:
+            error_response = self.get_error_response()
+        except AttributeError:
+            error_response = None
+
         if error_response:
             return error_response
 
@@ -81,24 +94,13 @@ class EwayPaymentDetailMixin(object):
 
     def get_eway_access_code(self, basket):
         order_number = self.generate_order_number(basket)
-        if compat.USES_NEW_STRATEGY_PATTERN:
-            total = self.get_order_totals(
-                basket, self.get_shipping_method(basket))
-            total_incl_tax = total.incl_tax
-        else:
-            total_incl_tax, __ = self.get_order_totals(basket)
 
-        try:
-            billing_address = self.get_billing_address()
-        except AttributeError:
-            billing_address = self.get_default_billing_address()
+        shipping_address = self.get_shipping_address_COMPAT(basket)
 
-        if compat.USES_NEW_STRATEGY_PATTERN:
-            shipping_address = self.get_shipping_address(basket)
-        else:
-            shipping_address = self.get_shipping_address()
+        total_incl_tax = self.get_total_incl_tax_COMPAT(
+            basket=basket, shipping_address=shipping_address)
 
-        billing_address = billing_address or shipping_address
+        billing_address = self.get_billing_address_COMPAT(shipping_address)
 
         redirect_url = "http://%s%s" % (
             self.request.META['HTTP_HOST'], reverse('eway-rapid-response'))

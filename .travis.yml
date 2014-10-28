@@ -1,6 +1,10 @@
 language: python
 python:
   - '2.7'
+
+addons:
+    postgresql: "9.3"
+
 env:
   global:
     # Eway sandbox keys to run system tests
@@ -15,6 +19,10 @@ env:
     - TOXENV=py27-django14-oscar06-envtest
     - TOXENV=py27-django15-oscar06-envtest
     - TOXENV=py27-django16-oscar06-envtest
+
+    - TOXENV=py27-django14-oscar07-envtest
+    - TOXENV=py27-django15-oscar07-envtest
+    - TOXENV=py27-django16-oscar07-envtest
     
     - TOXENV=test-postgres-migrations
     - TOXENV=test-mysql-migrations

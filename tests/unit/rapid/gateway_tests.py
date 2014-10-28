@@ -51,8 +51,8 @@ class TestAShippingAddressObject(TestCase):
             "City": "Quahog",
             "State": "Victoria",
             "PostalCode": "3070",
-            "Country": "au",
-        })
+            "Country": "au"})
+
         address = ShippingAddress.objects.create(
             first_name="Peter",
             last_name="Griffin",
@@ -60,15 +60,15 @@ class TestAShippingAddressObject(TestCase):
             line4="Quahog",
             state="Victoria",
             country=self.country,
-            postcode='3070',
-        )
+            postcode='3070')
 
         shipping_address = gateway.ShippingAddress(
             shipping_method=gateway.EWAY_SHIPPING_LOWCOST,
-            shipping_address=address
-        )
+            shipping_address=address)
 
-        self.assertItemsEqual(shipping_address.serialise(), json_sample)
+        self.assertItemsEqual(
+            json.loads(shipping_address.serialise()),
+            json.loads(json_sample))
 
 
 class TestARequest(TestCase):

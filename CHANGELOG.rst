@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.2.0
+-----
+
+* Add support for Oscar v0.7 and v0.8
+
+
 0.1.1
 -----
 
