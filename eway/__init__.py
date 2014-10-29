@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-__version__ = VERSION = (0, 1, 1)
+__version__ = VERSION = (0, 2, 0)
 
 PURCHASE = 'Purchase'
 PAYMENT_METHOD_EWAY = "eWay"
